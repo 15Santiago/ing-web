@@ -55,7 +55,7 @@
           <div class="grades-grid">
 
             <div class="field">
-              <label for="nota-1">Nota 1 · Seguimiento</label>
+              <label for="nota-1">Taller 1</label>
               <input
                 type="number"
                 id="nota-1"
@@ -67,11 +67,11 @@
                 aria-describedby="ayuda-nota-1 error-nota-1"
               >
               <p id="ayuda-nota-1" class="field__help">Valor entre 0.0 y 5.0.</p>
-              <p id="error-nota-1" class="field__error" role="alert" hidden>Ingresa un valor entre 0.0 y 5.0.</p>
+              <p id="error-nota-1" class="field__error" role="alert" hidden>El tipo de dato no es válido. Solo se permiten valores entre 0.0 y 5.0.</p>
             </div>
 
             <div class="field">
-              <label for="nota-2">Nota 2 · Taller</label>
+              <label for="nota-2">Quiz</label>
               <input
                 type="number"
                 id="nota-2"
@@ -83,11 +83,11 @@
                 aria-describedby="ayuda-nota-2 error-nota-2"
               >
               <p id="ayuda-nota-2" class="field__help">Valor entre 0.0 y 5.0.</p>
-              <p id="error-nota-2" class="field__error" role="alert" hidden>Ingresa un valor entre 0.0 y 5.0.</p>
+              <p id="error-nota-2" class="field__error" role="alert" hidden>El tipo de dato no es válido. Solo se permiten valores entre 0.0 y 5.0.</p>
             </div>
 
             <div class="field">
-              <label for="nota-3">Nota 3 · Parcial</label>
+              <label for="nota-3">Taller 2</label>
               <input
                 type="number"
                 id="nota-3"
@@ -99,11 +99,11 @@
                 aria-describedby="ayuda-nota-3 error-nota-3"
               >
               <p id="ayuda-nota-3" class="field__help">Valor entre 0.0 y 5.0.</p>
-              <p id="error-nota-3" class="field__error" role="alert" hidden>Ingresa un valor entre 0.0 y 5.0.</p>
+              <p id="error-nota-3" class="field__error" role="alert" hidden>El tipo de dato no es válido. Solo se permiten valores entre 0.0 y 5.0.</p>
             </div>
 
             <div class="field">
-              <label for="nota-4">Nota 4 · Final</label>
+              <label for="nota-4">Parcial</label>
               <input
                 type="number"
                 id="nota-4"
@@ -115,17 +115,17 @@
                 aria-describedby="ayuda-nota-4 error-nota-4"
               >
               <p id="ayuda-nota-4" class="field__help">Valor entre 0.0 y 5.0.</p>
-              <p id="error-nota-4" class="field__error" role="alert" hidden>Ingresa un valor entre 0.0 y 5.0.</p>
+              <p id="error-nota-4" class="field__error" role="alert" hidden>El tipo de dato no es válido. Solo se permiten valores entre 0.0 y 5.0.</p>
             </div>
 
           </div>
         </fieldset>
 
         <div class="form-actions">
-          <button type="submit" class="btn btn--primary" id="btn-calcular">
+          <button type="submit" class="btn btn--primary" id="btn-calcular" disabled>
             Calcular promedio
           </button>
-          <button type="button" class="btn btn--secondary" id="btn-guardar">
+          <button type="button" class="btn btn--secondary" id="btn-guardar" disabled>
             Guardar registro
           </button>
         </div>
@@ -133,7 +133,7 @@
     </section>
 
 
-    <section class="card card--result" aria-labelledby="titulo-resultado">
+    <section class="card card--result" aria-labelledby="titulo-resultado" hidden>
       <h2 id="titulo-resultado" class="card__title">
         <span class="card__index" aria-hidden="true">02</span>
         Resultado del boletín

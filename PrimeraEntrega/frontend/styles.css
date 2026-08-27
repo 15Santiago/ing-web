@@ -157,6 +157,7 @@ textarea:focus-visible {
 
 /* ---------- Layout principal ---------- */
 main {
+  width: 100%;
   max-width: var(--max-width);
   margin: 0 auto;
   padding: var(--space-section) 1rem calc(var(--space-section) * 1.5);
@@ -167,6 +168,7 @@ main {
 
 /* ---------- Tarjetas / secciones ---------- */
 .card {
+  width: 100%;
   background: var(--card-bg);
   border: 1px solid var(--paper-line);
   border-radius: var(--radius);
@@ -230,6 +232,18 @@ main {
   border: 1.5px solid var(--paper-line);
   border-radius: 8px;
   min-height: 46px; /* área táctil accesible */
+}
+
+/* Evita que el control nativo cambie el ancho visual en pantallas pequeñas. */
+.field input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.field input[type="number"]::-webkit-inner-spin-button,
+.field input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .field input::placeholder {
@@ -316,6 +330,11 @@ fieldset.field-group legend {
   color: var(--ink);
 }
 .btn--secondary:hover { background: var(--paper); }
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
 
 /* ---------- Resultado (boletín) ---------- */
 .card--result {

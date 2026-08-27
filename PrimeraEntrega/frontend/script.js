@@ -74,7 +74,9 @@ const notaIds = ['nota-1', 'nota-2', 'nota-3', 'nota-4'];
 const inputsNotas = notaIds.map(id => document.getElementById(id));
 const erroresNotas = notaIds.map(id => document.getElementById(`error-${id}`));
 
+const btnCalcular = document.getElementById('btn-calcular');
 const btnGuardar = document.getElementById('btn-guardar');
+const seccionResultado = document.querySelector('.card--result');
 
 const areaResultados = document.getElementById('area-resultados');
 const resultEmpty = areaResultados.querySelector('.result-slip__empty');
@@ -84,6 +86,51 @@ const [ddNombre, ddPromedio, ddEstado, ddRendimiento] =
   resultData.querySelectorAll('.result-slip__row dd');
 
 const cuerpoTabla = document.getElementById('cuerpo-tabla-registros');
+
+const mensajeNotaInvalida = 'El tipo de dato no es válido. Solo se permiten valores entre 0.0 y 5.0.';
+
+function notaValida(input) {
+  const valorTexto = input.value.trim();
+  const valor = Number(valorTexto);
+  return valorTexto !== '' && Number.isFinite(valor) && valor >= 0 && valor <= 5;
+}
+
+function actualizarEstadoBotones() {
+  const formularioValido = inputNombre.value.trim() !== '' && inputsNotas.every(notaValida);
+  btnCalcular.disabled = !formularioValido;
+  btnGuardar.disabled = !formularioValido;
+}
+
+inputsNotas.forEach((input) => {
+  const indice = inputsNotas.indexOf(input);
+
+  input.addEventListener('keydown', (evento) => {
+    if (evento.key.toLowerCase() === 'e') evento.preventDefault();
+  });
+
+  input.addEventListener('input', () => {
+    let valor = input.value.replace(/[eE+]/g, '');
+
+    const separadorDecimal = valor.indexOf('.');
+    if (separadorDecimal !== -1) {
+      valor = valor.slice(0, separadorDecimal + 2);
+    }
+
+    if (valor !== input.value) {
+      input.value = valor;
+    }
+
+    if (notaValida(input)) {
+      erroresNotas[indice].hidden = true;
+      input.removeAttribute('aria-invalid');
+    } else {
+      mostrarError(input, erroresNotas[indice], mensajeNotaInvalida);
+    }
+    actualizarEstadoBotones();
+  });
+});
+
+inputNombre.addEventListener('input', actualizarEstadoBotones);
 
 // Estado interno: si estamos editando un registro existente, guarda su id
 let idEnEdicion = null;
@@ -120,10 +167,10 @@ function validarFormulario() {
     const valor = Number(valorTexto);
 
     if (valorTexto === '' || Number.isNaN(valor)) {
-      mostrarError(input, erroresNotas[i], 'Ingresa un valor numérico entre 0.0 y 5.0.');
+      mostrarError(input, erroresNotas[i], mensajeNotaInvalida);
       valido = false;
     } else if (valor < 0 || valor > 5) {
-      mostrarError(input, erroresNotas[i], 'Ingresa un valor entre 0.0 y 5.0.');
+      mostrarError(input, erroresNotas[i], mensajeNotaInvalida);
       valido = false;
     }
   });
@@ -144,6 +191,7 @@ function construirEstudianteDesdeFormulario() {
 }
 
 function mostrarResultado(estudiante) {
+  seccionResultado.hidden = false;
   resultEmpty.hidden = true;
   resultData.hidden = false;
 
@@ -253,7 +301,6 @@ btnGuardar.addEventListener('click', async () => {
   if (!validarFormulario()) return;
 
   const estudiante = construirEstudianteDesdeFormulario();
-  mostrarResultado(estudiante);
 
   try {
     if (idEnEdicion) {
