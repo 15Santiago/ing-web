@@ -1,0 +1,490 @@
+/* =========================================================
+   GESTIÓN DE NOTAS ACADÉMICAS — Estilos
+   Enfoque: mobile-first · estética de "libro de calificaciones"
+   La base se define para móvil; cada breakpoint AÑADE tamaño
+   y espacio (tipografía, paddings, gaps), nunca solo layout.
+   ========================================================= */
+
+:root {
+  /* Paleta */
+  --paper: #F7F3E9;
+  --paper-line: #D9CDAE;
+  --card-bg: #FFFDF8;
+  --ink: #1F2A44;
+  --ink-soft: #5B6478;
+  --accent: #A63446;      /* rojo tinta — énfasis, errores */
+  --accent-soft: #F3DADD;
+  --approved: #2F6F4F;    /* verde — aprobado */
+  --approved-soft: #DCEBE1;
+  --outstanding: #A66A1E; /* ámbar — sobresaliente/excelente */
+  --outstanding-soft: #F3E4CC;
+  --focus-ring: #2B6CB0;
+
+  /* Tipografía */
+  --font-display: "Lora", Georgia, serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, Segoe UI, sans-serif;
+  --font-mono: "JetBrains Mono", "Courier New", monospace;
+
+  /* Tipografía fluida: crece con el ancho de pantalla entre los
+     límites definidos, en vez de saltar solo en un par de reglas. */
+  --fs-body:   clamp(1rem,    0.95rem + 0.25vw, 1.125rem);
+  --fs-small:  clamp(0.85rem, 0.82rem + 0.15vw, 0.95rem);
+  --fs-help:   clamp(0.8rem,  0.77rem + 0.12vw, 0.9rem);
+  --fs-h1:     clamp(1.6rem,  1.35rem + 1.6vw,  2.6rem);
+  --fs-h2:     clamp(1.15rem, 1.05rem + 0.6vw,  1.5rem);
+  --fs-value:  clamp(1.3rem,  1.15rem + 0.8vw,  1.8rem);
+  --fs-index:  clamp(0.8rem,  0.75rem + 0.2vw,  0.95rem);
+
+  /* Espaciado fluido */
+  --space-card:    clamp(1.25rem, 1rem + 1.2vw, 2.5rem);
+  --space-section: clamp(1.25rem, 1rem + 1vw,   2rem);
+  --gap-form:      clamp(1rem,    0.9rem + 0.5vw, 1.5rem);
+
+  /* Espaciado y forma */
+  --radius: 10px;
+  --shadow: 0 2px 10px rgba(31, 42, 68, 0.08);
+
+  /* Techo de ancho para el contenido. OJO: no se usa vw aquí.
+     En móvil, el padding de .site-header y main ya crea el
+     margen lateral; si además el max-width se calcula en vw
+     (relativo al viewport completo) se suma a ese padding y
+     el bloque "centrado" termina más ancho que el espacio
+     disponible de su propio contenedor, se desborda hacia la
+     derecha y visualmente todo parece pegado a la izquierda. */
+  --max-width: 720px;
+}
+
+/* ---------- Reset básico ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: 1.55;
+  /* Red de seguridad: si algo llega a ser más ancho que el
+     viewport, que haga scroll dentro de sí mismo (como ya
+     hace .table-scroll) en vez de correr todo el documento
+     y descentrar el contenido en móvil. */
+  overflow-x: hidden;
+}
+
+h1, h2, h3 { font-family: var(--font-display); margin: 0; color: var(--ink); }
+
+p { margin: 0; }
+
+img { max-width: 100%; display: block; }
+
+/* ---------- Utilidades de accesibilidad ---------- */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: 0.75rem;
+  top: -3rem;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0.6rem 1rem;
+  border-radius: 0 0 8px 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 0.15s ease;
+  z-index: 100;
+}
+.skip-link:focus {
+  top: 0;
+}
+
+/* Foco visible consistente en toda la app */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* ---------- Encabezado ---------- */
+.site-header {
+  background: var(--ink);
+  color: var(--paper);
+  padding: var(--space-card) 1.25rem;
+}
+.site-header__inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+.site-header__eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--fs-help);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #C9D3E8;
+  margin-bottom: 0.6rem;
+}
+.site-header__title {
+  font-size: var(--fs-h1);
+  font-weight: 600;
+  line-height: 1.2;
+}
+.site-header__subtitle {
+  margin-top: 0.75rem;
+  color: #D7DCEA;
+  font-size: var(--fs-small);
+  max-width: 46ch;
+}
+
+/* ---------- Layout principal ---------- */
+main {
+  width: 100%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: var(--space-section) 1rem calc(var(--space-section) * 1.5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-section);
+}
+
+/* ---------- Tarjetas / secciones ---------- */
+.card {
+  width: 100%;
+  background: var(--card-bg);
+  border: 1px solid var(--paper-line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: var(--space-card);
+  /* textura sutil de "papel rayado" */
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 2.35rem,
+    var(--paper-line) 2.36rem,
+    transparent 2.4rem
+  );
+  background-position: 0 4.6rem;
+}
+
+.card__title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.65rem;
+  font-size: var(--fs-h2);
+  font-weight: 600;
+  padding-bottom: 0.6rem;
+  margin-bottom: 0.35rem;
+  border-bottom: 2px solid var(--ink);
+}
+
+.card__index {
+  font-family: var(--font-mono);
+  font-size: var(--fs-index);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.card__hint {
+  color: var(--ink-soft);
+  font-size: var(--fs-small);
+  margin-bottom: var(--gap-form);
+}
+
+/* ---------- Formulario ---------- */
+.field {
+  margin-bottom: var(--gap-form);
+}
+
+.field label {
+  display: block;
+  font-weight: 600;
+  font-size: var(--fs-small);
+  margin-bottom: 0.4rem;
+  color: var(--ink);
+}
+
+.field input {
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  font-size: var(--fs-body);
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: var(--paper);
+  border: 1.5px solid var(--paper-line);
+  border-radius: 8px;
+  min-height: 46px; /* área táctil accesible */
+}
+
+/* Evita que el control nativo cambie el ancho visual en pantallas pequeñas. */
+.field input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.field input[type="number"]::-webkit-inner-spin-button,
+.field input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.field input::placeholder {
+  color: #8B8570;
+  font-style: italic;
+}
+
+.field input:focus {
+  border-color: var(--focus-ring);
+  background: var(--card-bg);
+}
+
+.field input:invalid[aria-invalid="true"] {
+  border-color: var(--accent);
+}
+
+.field__help {
+  font-size: var(--fs-help);
+  color: var(--ink-soft);
+  margin-top: 0.35rem;
+}
+
+.field__error {
+  font-size: var(--fs-help);
+  color: var(--accent);
+  font-weight: 600;
+  margin-top: 0.35rem;
+}
+
+fieldset.field-group {
+  border: 1.5px dashed var(--paper-line);
+  border-radius: 8px;
+  padding: 1rem 0.85rem 0.25rem;
+  margin: 0 0 var(--gap-form);
+}
+
+fieldset.field-group legend {
+  font-family: var(--font-mono);
+  font-size: var(--fs-help);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+  padding: 0 0.4rem;
+}
+
+/* Notas: 1 columna en móvil angosto; el propio grid pasa a 2
+   columnas apenas hay ancho suficiente para no verse apretado,
+   sin depender solo de un breakpoint fijo de "tablet". */
+.grades-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.25rem var(--gap-form);
+}
+
+/* ---------- Botones ---------- */
+.form-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.btn {
+  min-height: 48px;
+  padding: 0.8rem 1.4rem;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  font-family: var(--font-body);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  text-align: center;
+}
+
+.btn--primary {
+  background: var(--ink);
+  color: var(--paper);
+}
+.btn--primary:hover { background: #16233F; }
+
+.btn--secondary {
+  background: transparent;
+  border-color: var(--ink);
+  color: var(--ink);
+}
+.btn--secondary:hover { background: var(--paper); }
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* ---------- Resultado (boletín) ---------- */
+.card--result {
+  border-color: var(--ink);
+}
+
+.result-slip__empty {
+  color: var(--ink-soft);
+  font-size: var(--fs-small);
+  padding: 0.9rem 0;
+}
+
+.result-slip__data {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.result-slip__row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px dashed var(--paper-line);
+}
+.result-slip__row dt {
+  font-family: var(--font-mono);
+  font-size: var(--fs-help);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+}
+.result-slip__row dd {
+  margin: 0;
+  font-weight: 600;
+  font-size: var(--fs-body);
+  text-align: right;
+}
+.result-slip__value {
+  font-family: var(--font-mono);
+  font-size: var(--fs-value);
+  color: var(--ink);
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-size: var(--fs-help);
+  font-weight: 700;
+  background: var(--approved-soft);
+  color: var(--approved);
+}
+.badge--insufficient { background: var(--accent-soft); color: var(--accent); }
+.badge--outstanding   { background: var(--outstanding-soft); color: var(--outstanding); }
+
+/* ---------- Tabla de registros ---------- */
+.table-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--paper-line);
+  border-radius: 8px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.records-table {
+  width: 100%;
+  min-width: 40rem; /* en rem, no en px: escala junto con la tipografía */
+  border-collapse: collapse;
+  font-size: var(--fs-small);
+  background: var(--card-bg);
+}
+
+.records-table caption { text-align: left; }
+
+.records-table th,
+.records-table td {
+  padding: 0.7rem 0.85rem;
+  text-align: left;
+  border-bottom: 1px solid var(--paper-line);
+  white-space: nowrap;
+}
+
+.records-table thead th {
+  font-family: var(--font-mono);
+  font-size: var(--fs-help);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-soft);
+  background: var(--paper);
+}
+
+.records-table tbody td:nth-child(2),
+.records-table tbody td:nth-child(3),
+.records-table tbody td:nth-child(4),
+.records-table tbody td:nth-child(5),
+.records-table tbody td:nth-child(6) {
+  font-family: var(--font-mono);
+}
+
+.records-table__empty-row td {
+  color: var(--ink-soft);
+  font-style: italic;
+  white-space: normal;
+}
+
+/* ---------- Pie de página ---------- */
+.site-footer {
+  text-align: center;
+  padding: var(--space-section) 1rem calc(var(--space-section) * 1.3);
+  color: var(--ink-soft);
+  font-size: var(--fs-help);
+}
+
+/* =========================================================
+   BREAKPOINTS — mobile-first: ajustan LAYOUT (columnas,
+   ancho, dirección de flex). El tamaño de texto y el
+   espaciado ya crecen solos con clamp(), así que no se ven
+   "atascados" entre un salto de breakpoint y el siguiente.
+   ========================================================= */
+
+/* Tablet en adelante: acciones del formulario en fila */
+@media (min-width: 560px) {
+  .form-actions {
+    flex-direction: row;
+  }
+  .btn { flex: 1; }
+}
+
+/* Tablet grande / escritorio pequeño: más aire entre la
+   columna de contenido y los bordes de la ventana */
+@media (min-width: 860px) {
+  :root {
+    --max-width: 760px;
+  }
+}
+
+/* Escritorio: la columna de contenido puede crecer un poco
+   más sin perder una longitud de línea cómoda para leer */
+@media (min-width: 1200px) {
+  :root {
+    --max-width: 800px;
+  }
+}
+
+/* ---------- Alto contraste / impresión de respaldo ---------- */
+@media (prefers-contrast: more) {
+  :root {
+    --paper-line: #8A8060;
+    --ink-soft: #33394A;
+  }
+}
