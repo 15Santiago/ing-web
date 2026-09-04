@@ -155,6 +155,21 @@ textarea:focus-visible {
   max-width: 46ch;
 }
 
+.header-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1.25rem;
+  padding: 0.7rem 1rem;
+  border: 1px solid #C9D3E8;
+  border-radius: 8px;
+  color: var(--paper);
+  font-size: var(--fs-small);
+  font-weight: 600;
+  text-decoration: none;
+}
+.header-link:hover { background: #29405F; }
+
 /* ---------- Layout principal ---------- */
 main {
   width: 100%;
