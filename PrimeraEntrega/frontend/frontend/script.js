@@ -1,4 +1,4 @@
-const API_URL = 'api/estudiantes';
+const API_URL = 'http://localhost:8080/api/estudiantes'; 
 
 /* PROGRAMACIÓN ORIENTADA A OBJETOS
    Clase Estudiante: datos académicos y la
