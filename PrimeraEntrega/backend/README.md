@@ -11,7 +11,8 @@ backend-notas/
 ├── config/
 │   └── db.js                     # Conexión (pool) a MySQL
 ├── controllers/
-│   └── estudianteController.js   # Lógica de cada endpoint
+│   ├── estudianteController.js   # Lógica de cada endpoint
+│   └── organizacionController.js # Planeación de cursos y docentes
 ├── database/
 │   └── schema.sql                 # Tal cual la entregó el equipo (notasAcademicas / Estudiantes)
 ├── models/
@@ -19,9 +20,15 @@ backend-notas/
 ├── public/                        # Front end del equipo, SIN modificar
 │   ├── index.html
 │   ├── styles.css
-│   └── script.js
+│   ├── script.js
+│   ├── organizacion.html
+│   ├── organizacion.css
+│   └── organizacion.js
 ├── routes/
-│   └── estudianteRoutes.js        # Rutas /api/estudiantes
+│   ├── estudianteRoutes.js        # Rutas /api/estudiantes
+│   └── organizacionRoutes.js      # Rutas /api/organizacion
+├── services/
+│   └── organizacionService.js     # Cálculo de cargas y asignaciones
 ├── .env.example
 ├── package.json
 └── server.js                      # Sirve el front end (public/) + la API
@@ -114,6 +121,35 @@ Extra (no usados por el front actual, pero disponibles si los necesitas):
 - `POST /calcular` — calcula sin guardar
 - `GET /:id` — consulta un estudiante puntual
 - `GET /api/health` — verifica que el servidor está vivo
+
+### API de organización académica
+
+La nueva vista está disponible en `http://localhost:3000/organizacion.html` y también desde
+el botón **Organizar docentes y horarios** del boletín.
+
+- `GET /api/organizacion/configuracion` — devuelve cursos, jornadas, estudiantes y materias.
+- `POST /api/organizacion/planificar` — calcula horas semanales/anuales, distribución por jornada,
+  docentes requeridos, faltantes y carga individual de cada docente.
+
+El cuerpo del `POST` es opcional y permite probar otros escenarios:
+
+```json
+{
+  "docentesDisponibles": 30,
+  "horasTrabajoDocenteSemana": 40,
+  "semanasAnioLectivo": 40,
+  "horasExtraSemanaMax": 1,
+  "horasExtraMesMax": 4
+}
+```
+
+La configuración inicial interpreta `+` como mayor intensidad horaria y `-` como menor intensidad.
+Séptimo queda con 6 cursos, 3 en cada jornada, porque esa es la distribución indicada en los datos.
+La nómina está limitada a 30 docentes: no se contratan docentes adicionales. Cada docente tiene
+40 horas normales semanales, 1 hora extra semanal como máximo y 4 horas extra mensuales como máximo;
+la hora diaria de almuerzo queda fuera de las 8 horas laborales. Con los valores iniciales se calculan
+79 cursos, 2.242 estudiantes, 2.184 horas semanales, 55 docentes necesarios y 974 horas semanales
+pendientes que no pueden cubrirse con los 30 docentes permitidos.
 
 ### Formato de las respuestas
 

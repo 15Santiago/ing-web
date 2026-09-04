@@ -15,6 +15,7 @@ require('dotenv').config();
 
 const { verificarConexion } = require('./config/db');
 const estudianteRoutes = require('./routes/estudianteRoutes');
+const organizacionRoutes = require('./routes/organizacionRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -29,6 +30,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ---------- API ----------
 app.use('/api/estudiantes', estudianteRoutes);
+app.use('/api/organizacion', organizacionRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, mensaje: 'API de gestión de notas funcionando correctamente.' });
