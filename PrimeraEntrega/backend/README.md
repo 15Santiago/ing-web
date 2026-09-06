@@ -38,6 +38,15 @@ La aplicación queda disponible en `http://localhost:3000/` y la documentación 
 - `app/organization.py`: cálculo de planificación académica.
 - `public/`: frontend servido por FastAPI.
 - `database/schema.sql`: esquema MySQL y `database/seed/data/`: datos CSV.
+- `database/seed_database.py`: carga idempotente de cursos, docentes, materias, planes y horarios desde los CSV.
+
+Para cargar o recargar los datos académicos:
+
+```powershell
+.\.venv\Scripts\python.exe database\seed_database.py
+```
+
+La carga reemplaza las tablas académicas (`areas`, `materias`, `plan_materias`, `cursos`, `docentes` y `horarios`) y conserva los registros de `Estudiantes`.
 
 ## API principal
 
