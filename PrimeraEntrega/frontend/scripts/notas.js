@@ -1,4 +1,6 @@
-const API_URL = 'api/estudiantes';
+const API_URL = window.location.port === '3000'
+  ? '/api/estudiantes'
+  : 'http://localhost:3000/api/estudiantes';
 
 /* PROGRAMACIÓN ORIENTADA A OBJETOS
    Clase Estudiante: datos académicos y la

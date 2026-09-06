@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión académica</title>
+  <link rel="stylesheet" href="styles/gestion.css">
+</head>
+<body>
+  <a class="skip-link" href="#contenido-principal">Saltar al contenido principal</a>
+  <header class="management-header">
+    <div class="header-inner">
+      <div>
+        <a class="back-link" href="index.html">← Centro de operaciones</a>
+        <p class="eyebrow">Datos del backend · MySQL</p>
+        <h1>Gestión académica</h1>
+        <p class="header-copy">Consulta cursos, profesores, materias y horarios directamente desde la API.</p>
+        <p id="estado-api" class="header-copy" role="status">Conectando con la API...</p>
+      </div>
+      <button class="tool-button" id="btn-refrescar" type="button">Actualizar datos</button>
+    </div>
+  </header>
+
+  <main id="contenido-principal">
+    <section class="summary-grid" aria-label="Resumen del colegio">
+      <article class="metric metric--dark"><span>Cursos</span><strong id="total-cursos">0</strong><small>registrados</small></article>
+      <article class="metric"><span>Estudiantes</span><strong id="total-estudiantes">0</strong><small>matriculados</small></article>
+      <article class="metric"><span>Profesores activos</span><strong id="total-docentes">0</strong><small>en la API</small></article>
+      <article class="metric metric--alert"><span>Bloques vacantes</span><strong id="total-vacantes">0</strong><small>por asignar</small></article>
+    </section>
+
+    <section class="panel" aria-labelledby="titulo-configuracion">
+      <div class="section-heading"><div><p class="section-kicker">01 · Cursos</p><h2 id="titulo-configuracion">Cursos registrados</h2></div></div>
+      <div class="table-scroll"><table class="planning-table"><thead><tr><th>Curso</th><th>Jornada</th><th>Cupo máximo</th><th>Estudiantes</th></tr></thead><tbody id="tabla-cursos"></tbody></table></div>
+    </section>
+
+    <section class="panel" aria-labelledby="titulo-personal">
+      <div class="section-heading"><div><p class="section-kicker">02 · Profesores</p><h2 id="titulo-personal">Profesores registrados</h2></div></div>
+      <div class="table-scroll"><table class="planning-table"><thead><tr><th>Identificador</th><th>Nombre</th><th>Área</th><th>Horas asignadas</th><th>Estado</th></tr></thead><tbody id="tabla-docentes"></tbody></table></div>
+    </section>
+
+    <section class="panel" aria-labelledby="titulo-horarios">
+      <div class="section-heading"><div><p class="section-kicker">03 · Horarios</p><h2 id="titulo-horarios">Bloques de horario</h2></div></div>
+      <div class="table-scroll"><table class="planning-table"><thead><tr><th>Curso</th><th>Materia</th><th>Día</th><th>Hora</th><th>Profesor</th></tr></thead><tbody id="tabla-horarios"></tbody></table></div>
+    </section>
+
+    <section class="panel" aria-labelledby="titulo-materias">
+      <div class="section-heading"><div><p class="section-kicker">04 · Materias</p><h2 id="titulo-materias">Materias e intensidad horaria</h2></div></div>
+      <div class="table-scroll"><table class="planning-table"><thead><tr><th>Materia</th><th>Área</th><th>Planes registrados</th></tr></thead><tbody id="tabla-materias"></tbody></table></div>
+    </section>
+  </main>
+  <script src="scripts/gestion-api.js" defer></script>
+</body>
+</html>

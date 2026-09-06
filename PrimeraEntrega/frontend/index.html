@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Centro de operaciones académicas</title>
+  <meta name="description" content="Acceso a los módulos de notas, cursos, profesores y horarios.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;1,500&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/notas.css">
+</head>
+<body>
+
+  <a class="skip-link" href="#contenido-principal">Saltar al contenido principal</a>
+
+  <header class="site-header site-header--menu">
+    <div class="site-header__inner">
+      <p class="site-header__eyebrow">Colegio · Gestión académica</p>
+      <h1 class="site-header__title">Centro de operaciones</h1>
+      <p class="site-header__subtitle">Elige el módulo que quieres consultar o administrar.</p>
+    </div>
+  </header>
+
+  <main id="contenido-principal" class="menu-main">
+    <nav class="module-menu" aria-label="Módulos académicos">
+      <a class="module-card module-card--primary" href="notas.html"><span class="module-card__number">01</span><span class="module-card__title">Calcular promedio</span><span class="module-card__description">Registra notas, calcula resultados y consulta boletines.</span></a>
+      <a class="module-card" href="gestion.html#titulo-configuracion"><span class="module-card__number">02</span><span class="module-card__title">Gestionar cursos</span><span class="module-card__description">Organiza grados, jornadas, cupos y estudiantes.</span></a>
+      <a class="module-card" href="gestion.html#titulo-personal"><span class="module-card__number">03</span><span class="module-card__title">Gestionar profesores</span><span class="module-card__description">Administra el personal y la capacidad docente.</span></a>
+      <a class="module-card" href="gestion.html#titulo-horarios"><span class="module-card__number">04</span><span class="module-card__title">Gestionar horarios</span><span class="module-card__description">Consulta la distribución semanal.</span></a>
+    </nav>
+  </main>
+</body>
+</html>

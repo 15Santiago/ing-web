@@ -503,3 +503,66 @@ fieldset.field-group legend {
     --ink-soft: #33394A;
   }
 }
+
+.menu-main {
+  max-width: 980px;
+}
+
+.module-menu {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.module-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 190px;
+  padding: 1.5rem;
+  border: 1px solid var(--paper-line);
+  border-radius: var(--radius);
+  background: var(--card-bg);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.module-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent);
+}
+
+.module-card--primary {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.module-card__number {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.module-card__title {
+  margin-top: auto;
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 600;
+}
+
+.module-card__description {
+  margin-top: 0.5rem;
+  color: var(--ink-soft);
+  font-size: var(--fs-small);
+}
+
+.module-card--primary .module-card__description {
+  color: #d7dcea;
+}
+
+@media (max-width: 620px) {
+  .module-menu {
+    grid-template-columns: 1fr;
+  }
+}
