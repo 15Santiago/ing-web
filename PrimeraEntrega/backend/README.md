@@ -11,24 +11,30 @@ backend-notas/
 ├── config/
 │   └── db.js                     # Conexión (pool) a MySQL
 ├── controllers/
-│   ├── estudianteController.js   # Lógica de cada endpoint
-│   └── organizacionController.js # Planeación de cursos y docentes
+│   ├── estudianteController.js   # Lógica de cada endpoint (notas)
+│   ├── organizacionController.js # Simulador anterior (no persiste en BD)
+│   ├── areaController.js         # Catálogo de áreas/especialidades
+│   ├── materiaController.js      # CRUD de asignaturas + intensidad horaria
+│   ├── cursoController.js        # CRUD de cursos + aleatorizar cupos
+│   ├── docenteController.js      # CRUD docentes + despedir/asignar vacantes
+│   ├── horarioController.js      # CRUD horarios + consultas + conflictos
+│   └── dashboardController.js    # Resumen general de la programación
 ├── database/
-│   └── schema.sql                 # Tal cual la entregó el equipo (notasAcademicas / Estudiantes)
+│   ├── schema.sql                 # notasAcademicas: Estudiantes + programación académica real
+│   └── seed/
+│       ├── data/*.csv             # Datos reales extraídos de Horario_Colegio.xlsx
+│       └── seed.js                # Carga esos CSV en MySQL (npm run seed)
 ├── models/
 │   └── Estudiante.js              # Clase POO: promedio, aprobación, rendimiento
-├── public/                        # Front end del equipo, SIN modificar
-│   ├── index.html
-│   ├── styles.css
-│   ├── script.js
-│   ├── organizacion.html
-│   ├── organizacion.css
-│   └── organizacion.js
+├── public/                        # Front end servido tal cual (estático)
+│   ├── index.html / styles.css / script.js       # Boletín de notas (app original)
+│   ├── organizacion.html / .css / .js            # Simulador de planeación (sin BD)
+│   └── personal.html / .css / .js                # Gestión real de personal y horarios (con BD)
 ├── routes/
-│   ├── estudianteRoutes.js        # Rutas /api/estudiantes
-│   └── organizacionRoutes.js      # Rutas /api/organizacion
+│   ├── estudianteRoutes.js, organizacionRoutes.js
+│   └── areaRoutes.js, materiaRoutes.js, cursoRoutes.js, docenteRoutes.js, horarioRoutes.js, dashboardRoutes.js
 ├── services/
-│   └── organizacionService.js     # Cálculo de cargas y asignaciones
+│   └── organizacionService.js     # Cálculo de cargas y asignaciones (simulador)
 ├── .env.example
 ├── package.json
 └── server.js                      # Sirve el front end (public/) + la API
@@ -63,11 +69,14 @@ cd backend-notas
 # 2. Instala las dependencias
 npm install
 
-# 3. Crea la base de datos y la tabla (usa el schema.sql del equipo, sin cambios)
+# 3. Crea la base de datos y todas las tablas (notas + programación académica)
 mysql -u root -p < database/schema.sql
 
 # 4. Copia el archivo de variables de entorno y ajusta tus credenciales
 cp .env.example .env
+
+# 5. Carga los datos reales del colegio (cursos, docentes, materias y horario)
+npm run seed
 ```
 
 Edita `.env` con tus datos reales de MySQL:
@@ -150,6 +159,43 @@ La nómina está limitada a 30 docentes: no se contratan docentes adicionales. C
 la hora diaria de almuerzo queda fuera de las 8 horas laborales. Con los valores iniciales se calculan
 79 cursos, 2.242 estudiantes, 2.184 horas semanales, 55 docentes necesarios y 974 horas semanales
 pendientes que no pueden cubrirse con los 30 docentes permitidos.
+
+### API de personal docente y horarios (con base de datos real)
+
+Vista en `http://localhost:3000/personal.html` (botón **Personal docente y horarios** del boletín).
+A diferencia del simulador anterior, todo aquí lee y escribe en MySQL: 79 cursos, 30 docentes y
+los bloques de horario reales (uno por cada clase de 45 minutos, con su curso/materia/día/hora),
+cargados con `npm run seed` desde `database/seed/data/*.csv` (extraídos de `Horario_Colegio.xlsx`).
+Si el Excel cambia (correcciones al horario, nuevos docentes, etc.), vuelve a extraer esas hojas a
+CSV en `database/seed/data/` y corre `npm run seed` de nuevo para refrescar la base de datos.
+
+| Recurso | Endpoints |
+|---|---|
+| Áreas | `GET /api/areas` |
+| Materias | `GET/POST /api/materias`, `PUT/DELETE /api/materias/:id`, `POST/PUT/DELETE /api/materias/plan[/:id]` (intensidad horaria por nivel) |
+| Cursos | `GET/POST /api/cursos` (filtros `?jornada=&grado=`), `GET/PUT/DELETE /api/cursos/:id`, `POST /api/cursos/aleatorizar-cupos` |
+| Docentes | `GET/POST /api/docentes` (filtros `?activo=&areaId=`), `GET/PUT/DELETE /api/docentes/:id`, `POST /api/docentes/despedir`, `POST /api/docentes/:id/asignar-vacantes` |
+| Horarios | `GET/POST /api/horarios` (filtros `?cursoId=&docenteId=&materiaId=&jornada=&dia=&vacantes=true`), `GET /api/horarios/conflictos`, `PUT/DELETE /api/horarios/:id`, `PUT /api/horarios/:id/asignar` |
+| Dashboard | `GET /api/dashboard` |
+
+**Despedir docentes** (`POST /api/docentes/despedir` con `{ "ids": ["MAT-FIS-01", "MAT-FIS-02"] }`)
+marca a esos docentes como inactivos y deja sus bloques de horario vacantes (`docente_id = NULL`),
+devolviendo el impacto: cuántos bloques y qué cursos quedaron afectados, con materia/día/hora de
+cada clase sin cubrir.
+
+**Contratar** (`POST /api/docentes` con `{ "nombre", "areaId", "horasContratadas" }`) crea el
+docente (si no se manda `id`, se genera uno correlativo dentro de su área, ej. `MAT-FIS-07`). Para
+cargarle horario se usa `PUT /api/horarios/:id/asignar` con `{ "docenteId" }` sobre un bloque
+vacante (o el bulk `POST /api/docentes/:id/asignar-vacantes` con `{ "horarioIds": [...] }`), que
+valida que no choque con otra clase suya y que no supere sus horas contratadas.
+
+**Conflictos de horario** ("un docente o curso asignado simultáneamente") están impedidos por
+diseño con las llaves `UNIQUE (curso_id, dia, hora_inicio)` y `UNIQUE (docente_id, dia, hora_inicio)`
+de la tabla `horarios`; `GET /api/horarios/conflictos` los expone explícitamente para el dashboard.
+
+El número de estudiantes de un curso se trata como variable aleatoria acotada por su cupo máximo:
+se genera al azar (entre 75% y 100% del cupo) en el seed y cada vez que se llama a
+`POST /api/cursos/aleatorizar-cupos`; también se puede fijar a mano con `PUT /api/cursos/:id`.
 
 ### Formato de las respuestas
 

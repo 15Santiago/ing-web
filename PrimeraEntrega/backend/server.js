@@ -16,6 +16,12 @@ require('dotenv').config();
 const { verificarConexion } = require('./config/db');
 const estudianteRoutes = require('./routes/estudianteRoutes');
 const organizacionRoutes = require('./routes/organizacionRoutes');
+const areaRoutes = require('./routes/areaRoutes');
+const materiaRoutes = require('./routes/materiaRoutes');
+const cursoRoutes = require('./routes/cursoRoutes');
+const docenteRoutes = require('./routes/docenteRoutes');
+const horarioRoutes = require('./routes/horarioRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,6 +37,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ---------- API ----------
 app.use('/api/estudiantes', estudianteRoutes);
 app.use('/api/organizacion', organizacionRoutes);
+app.use('/api/areas', areaRoutes);
+app.use('/api/materias', materiaRoutes);
+app.use('/api/cursos', cursoRoutes);
+app.use('/api/docentes', docenteRoutes);
+app.use('/api/horarios', horarioRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, mensaje: 'API de gestión de notas funcionando correctamente.' });
