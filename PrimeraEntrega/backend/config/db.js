@@ -26,7 +26,7 @@ async function verificarConexion() {
   } catch (error) {
     console.error('❌ Error al conectar con la base de datos:', error.message);
     console.error('   Revisa el archivo .env y que el servidor MySQL esté activo,');
-    console.error('   y que ya hayas ejecutado database/schema.sql.');
+    console.error('   y que ya hayas ejecutado ../DB/schema.sql.');
     process.exit(1);
   }
 }

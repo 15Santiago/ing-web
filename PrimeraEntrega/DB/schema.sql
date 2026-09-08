@@ -27,8 +27,9 @@ CONSTRAINT chk_nota4 CHECK (nota4 BETWEEN 0.0 AND 5.0)
    Modela la planta real del colegio: 42 cursos, maximo 30 docentes
    y el horario semanal bloque a bloque (bloques de 45 min, sin
    horas de trabajo autonomo: todo bloque es una clase real). Los
-   datos se cargan desde database/seed/data/*.csv (extraidos de
-   Horario_Colegio.xlsx) con database/seed/seed.js.
+   datos se cargan desde seed/data/*.csv (extraidos de
+   Horario_Colegio.xlsx) con seed/seed.js (corre "npm run seed"
+   desde PrimeraEntrega/backend).
 
    Jornada manana 7:00-12:00 y tarde 13:00-18:00 (5 horas cada una,
    con un receso de 30 min a la mitad); un docente de tiempo

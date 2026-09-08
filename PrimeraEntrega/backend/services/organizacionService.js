@@ -1,4 +1,4 @@
-// Refleja la misma programación real que carga database/seed/seed.js
+// Refleja la misma programación real que carga ../DB/seed/seed.js
 // (42 cursos, máximo 30 docentes, sin horas de trabajo autónomo: la
 // jornada completa -30 bloques de 45 min/semana por curso- son clases
 // reales). Este simulador aproxima cada materia con una única

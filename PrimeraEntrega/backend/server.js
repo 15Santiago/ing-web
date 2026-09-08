@@ -2,11 +2,13 @@
 // Servidor principal - Gestión de Notas Académicas
 // Proyecto Integrador - Optativa II Desarrollo Móvil
 //
-// Sirve el front end estático (carpeta /public, tal cual fue
-// entregado por el compañero de front end, sin modificar) Y
-// expone la API en /api/estudiantes. Como ambos quedan en el
-// mismo origen (mismo host:puerto), el fetch('api/estudiantes')
-// de script.js funciona directo, sin configurar CORS aparte.
+// El proyecto está separado en tres carpetas hermanas dentro de
+// PrimeraEntrega/: frontend/ (HTML/CSS/JS estático), backend/
+// (este servidor + la API) y DB/ (schema.sql y el seed). Este
+// servidor sirve ../frontend como archivos estáticos Y expone la
+// API en /api/*. Al quedar ambos en el mismo origen (mismo
+// host:puerto), el fetch('api/estudiantes') de script.js funciona
+// directo, sin configurar CORS aparte.
 // =========================================================
 const path = require('path');
 const express = require('express');
@@ -31,8 +33,9 @@ app.use(cors()); // por si en algún momento se sirve el front desde otro origen
 app.use(express.json());
 
 // ---------- Front end estático ----------
-// index.html, styles.css y script.js van en /public sin modificar.
-app.use(express.static(path.join(__dirname, 'public')));
+// index.html, styles.css, script.js, personal.html, etc. viven en
+// la carpeta hermana ../frontend (ver PrimeraEntrega/frontend/).
+app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
 // ---------- API ----------
 app.use('/api/estudiantes', estudianteRoutes);

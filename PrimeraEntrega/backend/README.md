@@ -1,59 +1,62 @@
 # Backend - Gestión de Notas Académicas
 
 Backend en **Node.js + Express + MySQL** para el proyecto integrador de *Optativa II Desarrollo Móvil*.
-Ajustado para funcionar tal cual con el front end del equipo (`index.html` / `styles.css` / `script.js`,
-sin modificaciones) y con el `schema.sql` ya definido (base de datos `notasAcademicas`, tabla `Estudiantes`).
+Vive dentro de `PrimeraEntrega/`, junto a sus dos carpetas hermanas: `frontend/` (HTML/CSS/JS
+estático) y `DB/` (schema.sql y el seed) — ver el diagrama completo más abajo.
 
 ## 1. Estructura del proyecto
 
 ```
-backend-notas/
-├── config/
-│   └── db.js                     # Conexión (pool) a MySQL
-├── controllers/
-│   ├── estudianteController.js   # Lógica de cada endpoint (notas)
-│   ├── organizacionController.js # Simulador anterior (no persiste en BD)
-│   ├── areaController.js         # Catálogo de áreas/especialidades
-│   ├── materiaController.js      # CRUD de asignaturas + intensidad horaria
-│   ├── cursoController.js        # CRUD de cursos + aleatorizar cupos
-│   ├── docenteController.js      # CRUD docentes + despedir/asignar vacantes
-│   ├── horarioController.js      # CRUD horarios + consultas + conflictos
-│   └── dashboardController.js    # Resumen general de la programación
-├── database/
-│   ├── schema.sql                 # notasAcademicas: Estudiantes + programación académica real
-│   └── seed/
-│       ├── data/*.csv             # Datos reales extraídos de Horario_Colegio.xlsx
-│       └── seed.js                # Carga esos CSV en MySQL (npm run seed)
-├── models/
-│   └── Estudiante.js              # Clase POO: promedio, aprobación, rendimiento
-├── public/                        # Front end servido tal cual (estático)
+PrimeraEntrega/
+├── frontend/                      # Front end estático, servido tal cual por server.js
 │   ├── index.html / styles.css / script.js       # Boletín de notas (app original)
 │   ├── organizacion.html / .css / .js            # Simulador de planeación (sin BD)
 │   └── personal.html / .css / .js                # Gestión real de personal y horarios (con BD)
-├── routes/
-│   ├── estudianteRoutes.js, organizacionRoutes.js
-│   └── areaRoutes.js, materiaRoutes.js, cursoRoutes.js, docenteRoutes.js, horarioRoutes.js, dashboardRoutes.js
-├── services/
-│   └── organizacionService.js     # Cálculo de cargas y asignaciones (simulador)
-├── .env.example
-├── package.json
-└── server.js                      # Sirve el front end (public/) + la API
+├── DB/                             # Todo lo de base de datos, fuera del código del servidor
+│   ├── schema.sql                  # notasAcademicas: Estudiantes + programación académica real
+│   └── seed/
+│       ├── data/*.csv              # Datos reales extraídos de Horario_Colegio.xlsx
+│       └── seed.js                 # Carga esos CSV en MySQL (npm run seed, desde backend/)
+└── backend/                        # Este servidor (Node.js + Express) + la API
+    ├── config/
+    │   └── db.js                     # Conexión (pool) a MySQL
+    ├── controllers/
+    │   ├── estudianteController.js   # Lógica de cada endpoint (notas)
+    │   ├── organizacionController.js # Simulador anterior (no persiste en BD)
+    │   ├── areaController.js         # Catálogo de áreas/especialidades
+    │   ├── materiaController.js      # CRUD de asignaturas + intensidad horaria
+    │   ├── cursoController.js        # CRUD de cursos + aleatorizar estudiantes
+    │   ├── docenteController.js      # CRUD docentes + despedir/activar/asignar vacantes
+    │   ├── horarioController.js      # CRUD horarios + consultas + conflictos
+    │   └── dashboardController.js    # Resumen general de la programación
+    ├── models/
+    │   └── Estudiante.js              # Clase POO: promedio, aprobación, rendimiento
+    ├── routes/
+    │   ├── estudianteRoutes.js, organizacionRoutes.js
+    │   └── areaRoutes.js, materiaRoutes.js, cursoRoutes.js, docenteRoutes.js, horarioRoutes.js, dashboardRoutes.js
+    ├── services/
+    │   ├── organizacionService.js         # Cálculo de cargas y asignaciones (simulador)
+    │   └── necesidadDocentesService.js    # Docentes necesarios contra la BD real (no simulado)
+    ├── .env.example
+    ├── package.json
+    └── server.js                      # Sirve ../frontend (estático) + la API
 ```
 
-## 2. Por qué el front va dentro de `public/`
+## 2. Por qué el front vive en una carpeta hermana (`../frontend`)
 
-Tu `script.js` hace:
+`script.js` hace:
 
 ```js
 const API_URL = 'api/estudiantes';
 ```
 
 Es una ruta **relativa** (sin `/` inicial ni dominio). Eso significa que el front espera
-vivir en el **mismo origen** (mismo host y puerto) que la API. Por eso `server.js` sirve
-`index.html`, `styles.css` y `script.js` como archivos estáticos desde `public/`, y monta
-la API en `/api/estudiantes`. Así, al abrir `http://localhost:3000/`, el `fetch('api/estudiantes')`
-resuelve automáticamente a `http://localhost:3000/api/estudiantes` — cero configuración extra,
-y no tuvimos que tocar ni una línea del front end.
+vivir en el **mismo origen** (mismo host y puerto) que la API, aunque su código esté en
+una carpeta aparte. Por eso `server.js` sirve `index.html`, `styles.css`, `script.js`, etc.
+como archivos estáticos desde `../frontend`, y monta la API en `/api/estudiantes`. Así, al
+abrir `http://localhost:3000/`, el `fetch('api/estudiantes')` resuelve automáticamente a
+`http://localhost:3000/api/estudiantes` — cero configuración extra, un solo servidor
+corriendo, y el front end sigue viviendo en su propia carpeta separada del backend.
 
 ## 3. Requisitos previos
 
@@ -64,18 +67,20 @@ y no tuvimos que tocar ni una línea del front end.
 
 ```bash
 # 1. Entra a la carpeta del backend
-cd backend-notas
+cd PrimeraEntrega/backend
 
 # 2. Instala las dependencias
 npm install
 
-# 3. Crea la base de datos y todas las tablas (notas + programación académica)
-mysql -u root -p < database/schema.sql
+# 3. Crea la base de datos y todas las tablas (notas + programación académica),
+#    definidas en la carpeta DB/ hermana de backend/
+mysql -u root -p < ../DB/schema.sql
 
 # 4. Copia el archivo de variables de entorno y ajusta tus credenciales
 cp .env.example .env
 
 # 5. Carga los datos reales del colegio (cursos, docentes, materias y horario)
+#    desde DB/seed/data/*.csv
 npm run seed
 ```
 
@@ -166,9 +171,9 @@ Vista en `http://localhost:3000/personal.html` (botón **Personal docente y hora
 A diferencia del simulador anterior, todo aquí lee y escribe en MySQL: hasta 42 cursos (secciones),
 un máximo de 30 docentes y los bloques de horario reales (uno por cada clase de 45 minutos, con su
 curso/materia/día/hora — ya no hay bloques de "trabajo autónomo": toda la jornada son clases),
-cargados con `npm run seed` desde `database/seed/data/*.csv` (extraídos de `Horario_Colegio.xlsx`).
+cargados con `npm run seed` desde `../DB/seed/data/*.csv` (extraídos de `Horario_Colegio.xlsx`).
 Si el Excel cambia (correcciones al horario, nuevos docentes, etc.), vuelve a extraer esas hojas a
-CSV en `database/seed/data/` y corre `npm run seed` de nuevo para refrescar la base de datos.
+CSV en `../DB/seed/data/` y corre `npm run seed` de nuevo para refrescar la base de datos.
 
 | Recurso | Endpoints |
 |---|---|
@@ -269,7 +274,7 @@ curl -X DELETE http://localhost:3000/api/estudiantes/1
 - **JavaScript y funcionamiento (15%)**: `estudianteController.js`, `server.js`, `routes/`.
 - **Programación Orientada a Objetos (15%)**: `models/Estudiante.js` (misma lógica que la clase
   `Estudiante` del front, para validar/recalcular en el servidor).
-- **Base de datos y operaciones CRUD (20%)**: `database/schema.sql` (`notasAcademicas.Estudiantes`)
+- **Base de datos y operaciones CRUD (20%)**: `../DB/schema.sql` (`notasAcademicas.Estudiantes`)
   + los 4 endpoints Create/Read/Update/Delete.
 - **Cálculo y clasificación de notas (10%)**: métodos `calcularPromedio()`, `determinarAprobacion()`,
   `determinarRendimiento()`, siguiendo exactamente la escala de la guía.

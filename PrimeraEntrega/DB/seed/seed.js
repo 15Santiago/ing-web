@@ -1,15 +1,15 @@
 // =========================================================
 // Seed de la programación académica real del colegio.
-// Lee los CSV extraídos de Horario_Colegio.xlsx (database/seed/data)
-// y carga areas, materias, plan_materias, cursos, docentes y
+// Lee los CSV extraídos de Horario_Colegio.xlsx (DB/seed/data) y
+// carga areas, materias, plan_materias, cursos, docentes y
 // horarios en MySQL. Es idempotente: vacía las tablas antes de
 // insertar, así que se puede correr varias veces sin duplicar.
 //
-// Uso:  npm run seed
+// Uso (desde PrimeraEntrega/backend):  npm run seed
 // =========================================================
 const fs = require('fs');
 const path = require('path');
-const { pool } = require('../../config/db');
+const { pool } = require('../../backend/config/db');
 
 const DATA_DIR = path.join(__dirname, 'data');
 
