@@ -28,12 +28,16 @@ async function consultarTodos(req, res) {
     if (materiaId) { condiciones.push('h.materia_id = ?'); parametros.push(materiaId); }
     if (jornada) { condiciones.push('c.jornada = ?'); parametros.push(jornada); }
     if (dia) { condiciones.push('h.dia = ?'); parametros.push(dia); }
-    if (vacantes === 'true') { condiciones.push('h.docente_id IS NULL'); }
+    if (vacantes === 'true') {
+      // Solo interesan como "vacantes por cubrir" los bloques de
+      // cursos activos: una sección cerrada no necesita docente.
+      condiciones.push('h.docente_id IS NULL', 'c.activo = TRUE');
+    }
     const where = condiciones.length ? `WHERE ${condiciones.join(' AND ')}` : '';
 
     const [filas] = await pool.query(
       `SELECT h.id, h.dia, h.hora_inicio, h.hora_fin, h.docente_id, d.nombre AS docente_nombre,
-              h.materia_id, m.nombre AS materia, h.curso_id, c.grado, c.seccion, c.jornada, c.estudiantes
+              h.materia_id, m.nombre AS materia, h.curso_id, c.grado, c.seccion, c.jornada, c.estudiantes, c.activo AS curso_activo
        FROM horarios h
        JOIN cursos c ON c.id = h.curso_id
        JOIN materias m ON m.id = h.materia_id

@@ -18,7 +18,7 @@ const AREAS = [
   { codigo: 'ESP-ING', nombre: 'Español e Inglés' },
   { codigo: 'CIENCIAS', nombre: 'Ciencias Naturales (Biología / Química)' },
   { codigo: 'EDF-ETICA', nombre: 'Educación Física y Ética' },
-  { codigo: 'FLEX', nombre: 'Informática, Sociales y Filosofía' },
+  { codigo: 'FLEX', nombre: 'Informática, Sociales, Filosofía y Artística' },
 ];
 
 const DIAS_SIN_TILDE = {
@@ -78,16 +78,12 @@ async function seed() {
   const planMateriasCsv = leerCsv('plan_materias.csv');
   const horariosCsv = leerCsv('horarios.csv');
 
-  // Filas de biblioteca (Bloques_semana = "—"): son solo una nota
-  // descriptiva de qué bloques ya no consumen horas docente, no
-  // una materia con intensidad horaria propia. Se excluyen de
-  // materias/plan_materias.
-  const planMateriasConDocente = planMateriasCsv.filter((fila) => fila.Bloques_semana !== '—');
-
   // Materias únicas + a qué área pertenecen, tomado de la columna
-  // "Responsable" del plan de materias.
+  // "Responsable" del plan de materias. Todas las filas del plan
+  // consumen horas docente: ya no hay bloques de "trabajo autónomo"
+  // (biblioteca) sin profesor asignado por diseño.
   const materiasMapa = new Map(); // nombre -> { areaCodigo }
-  planMateriasConDocente.forEach((fila) => {
+  planMateriasCsv.forEach((fila) => {
     const nombre = fila.Materia;
     if (!materiasMapa.has(nombre)) {
       materiasMapa.set(nombre, { areaCodigo: fila.Responsable });
@@ -128,11 +124,11 @@ async function seed() {
 
     // ---- plan_materias ----
     const RANGOS_NIVEL = {
-      'Primaria (1°–5°)': [1, 5],
-      'Bachillerato (6°–10°)': [6, 10],
+      'Primaria (1°-5°)': [1, 5],
+      'Bachillerato (6°-10°)': [6, 10],
       'Grado 11°': [11, 11],
     };
-    const filasPlan = planMateriasConDocente.map((fila) => {
+    const filasPlan = planMateriasCsv.map((fila) => {
       const [gradoMin, gradoMax] = RANGOS_NIVEL[fila.Nivel] || [1, 11];
       return [fila.Nivel, gradoMin, gradoMax, materiaIdPorNombre.get(fila.Materia), Number(fila.Bloques_semana), Number(fila.Horas_semana)];
     });
@@ -141,36 +137,39 @@ async function seed() {
       [filasPlan]
     );
 
-    // ---- cursos (se conserva el Curso_ID original del Excel) ----
-    // La columna Jornada ahora trae el horario real entre paréntesis
-    // (ej. "Mañana (7:00-12:00)"); solo se necesita la primera palabra.
+    // ---- cursos (se conserva el Curso_ID original; todas las
+    // secciones nacen activas, "aleatorizar-estudiantes" abre/cierra
+    // según la matrícula) ----
     const filasCursos = cursosCsv.map((fila) => {
       const jornadaTexto = fila.Jornada.split(' ')[0];
+      const cupoMaximo = Number(fila['Máx. estudiantes']);
       return [
         Number(fila.Curso_ID),
         Number(fila.Grado),
         fila['Sección'],
         JORNADA_SIN_TILDE[jornadaTexto] || jornadaTexto,
-        Number(fila['Máx. estudiantes']),
-        estudiantesAleatorios(Number(fila['Máx. estudiantes'])),
+        cupoMaximo,
+        estudiantesAleatorios(cupoMaximo),
+        true,
       ];
     });
     await conexion.query(
-      'INSERT INTO cursos (id, grado, seccion, jornada, cupo_maximo, estudiantes) VALUES ?',
+      'INSERT INTO cursos (id, grado, seccion, jornada, cupo_maximo, estudiantes, activo) VALUES ?',
       [filasCursos]
     );
 
     // ---- docentes (se conserva el Docente_ID original, ej. MAT-FIS-01) ----
     const filasDocentes = docentesCsv.map((fila) => {
       const codigoArea = fila.Docente_ID.replace(/-\d+$/, '');
-      return [fila.Docente_ID, fila.Nombre, areaIdPorCodigo.get(codigoArea) || null];
+      return [fila.Docente_ID, fila.Nombre, areaIdPorCodigo.get(codigoArea) || null, Number(fila.Horas_contratadas)];
     });
     await conexion.query(
-      'INSERT INTO docentes (id, nombre, area_id) VALUES ?',
+      'INSERT INTO docentes (id, nombre, area_id, horas_contratadas) VALUES ?',
       [filasDocentes]
     );
 
-    // ---- horarios (1501 bloques reales, 45 min cada uno) ----
+    // ---- horarios docentes (bloques reales de 45 min; Docente_ID
+    // vacío = bloque vacante, aún sin cubrir con un docente) ----
     const filasHorarios = horariosCsv.map((fila) => {
       const materiaId = materiaIdPorNombre.get(fila.Materia);
       if (!materiaId) {
@@ -180,7 +179,7 @@ async function seed() {
       return [
         Number(fila.Curso_ID),
         materiaId,
-        fila.Docente_ID,
+        fila.Docente_ID || null,
         DIAS_SIN_TILDE[fila['Día']] || fila['Día'],
         horaInicio,
         horaFin,
@@ -191,7 +190,8 @@ async function seed() {
       [filasHorarios]
     );
 
-    console.log(`✅ Seed completo: ${AREAS.length} áreas, ${materiaIdPorNombre.size} materias, ${filasCursos.length} cursos, ${filasDocentes.length} docentes, ${filasHorarios.length} bloques de horario.`);
+    const vacantes = filasHorarios.filter((fila) => fila[2] === null).length;
+    console.log(`✅ Seed completo: ${AREAS.length} áreas, ${materiaIdPorNombre.size} materias, ${filasCursos.length} cursos, ${filasDocentes.length} docentes, ${filasHorarios.length} bloques de horario (${vacantes} vacantes).`);
   } catch (error) {
     console.error('❌ Error durante el seed:', error);
     process.exitCode = 1;

@@ -3,7 +3,7 @@ const router = express.Router();
 const cursoController = require('../controllers/cursoController');
 
 router.get('/', cursoController.consultarTodos);
-router.post('/aleatorizar-cupos', cursoController.aleatorizarCupos);
+router.post('/aleatorizar-estudiantes', cursoController.aleatorizarEstudiantes);
 router.get('/:id', cursoController.consultarPorId);
 router.post('/', cursoController.crear);
 router.put('/:id', cursoController.actualizar);

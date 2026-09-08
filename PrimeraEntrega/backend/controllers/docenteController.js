@@ -254,6 +254,35 @@ async function eliminar(req, res) {
 }
 
 // ---------------------------------------------------------
+// POST /api/docentes/:id/activar  (recontratar a un docente despedido)
+// Vuelve a marcarlo activo; sus bloques anteriores quedaron
+// vacantes al despedirlo y no se reasignan solos, para evitar
+// choques de horario: se cubren desde "Bloques vacantes".
+// ---------------------------------------------------------
+async function activar(req, res) {
+  try {
+    const { id } = req.params;
+    const [docentes] = await pool.query('SELECT id, activo FROM docentes WHERE id = ?', [id]);
+    if (docentes.length === 0) {
+      return res.status(404).json({ mensaje: 'Docente no encontrado.' });
+    }
+    if (docentes[0].activo) {
+      return res.status(409).json({ mensaje: 'El docente ya está activo.' });
+    }
+    await pool.query('UPDATE docentes SET activo = TRUE, fecha_baja = NULL WHERE id = ?', [id]);
+    const [actualizado] = await pool.query(
+      `SELECT d.*, a.codigo AS area_codigo, a.nombre AS area_nombre
+       FROM docentes d LEFT JOIN areas a ON a.id = d.area_id WHERE d.id = ?`,
+      [id]
+    );
+    return res.status(200).json(actualizado[0]);
+  } catch (error) {
+    console.error('Error en activar() [docentes]:', error);
+    return res.status(500).json({ mensaje: 'Error interno al reactivar el docente.' });
+  }
+}
+
+// ---------------------------------------------------------
 // POST /api/docentes/:id/asignar-vacantes { horarioIds: [...] }
 // Asigna en bloque varios horarios vacantes (o de otro docente)
 // a este docente, validando choques de horario y el máximo de
@@ -324,5 +353,6 @@ module.exports = {
   actualizar,
   despedir,
   eliminar,
+  activar,
   asignarVacantes,
 };

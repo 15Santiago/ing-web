@@ -1,40 +1,51 @@
+// Refleja la misma programación real que carga database/seed/seed.js
+// (42 cursos, máximo 30 docentes, sin horas de trabajo autónomo: la
+// jornada completa -30 bloques de 45 min/semana por curso- son clases
+// reales). Este simulador aproxima cada materia con una única
+// intensidad horaria por todos los grados en los que se dicta (a
+// diferencia de plan_materias, que sí varía por nivel), así que sus
+// números son un estimado rápido, no un espejo exacto del horario
+// real que se consulta en /personal.html.
 const DEFAULT_CONFIG = {
   docentesDisponibles: 30,
   maxDocentes: 30,
   diasLaboralesSemana: 5,
   horasTrabajoDiarias: 8,
   horasAlmuerzoDiarias: 1,
-  horasTrabajoDocenteSemana: 40,
+  horasTrabajoDocenteSemana: 34.5,
   horasExtraSemanaMax: 1,
   horasExtraMesMax: 4,
-  horasJornadaCursoDia: 5,
+  horasJornadaCursoDia: 4.5,
   semanasAnioLectivo: 40,
   semanasExtraPermitidasMes: 4,
   cursos: {
-    11: { total: 4, manana: 4, tarde: 0, estudiantes: 30 },
-    10: { total: 5, manana: 5, tarde: 0, estudiantes: 30 },
-    9: { total: 5, manana: 2, tarde: 3, estudiantes: 28 },
-    8: { total: 6, manana: 3, tarde: 3, estudiantes: 28 },
-    7: { total: 6, manana: 3, tarde: 3, estudiantes: 28, inferido: true },
-    6: { total: 6, manana: 3, tarde: 3, estudiantes: 30 },
-    5: { total: 9, manana: 5, tarde: 4, estudiantes: 28 },
-    4: { total: 9, manana: 5, tarde: 4, estudiantes: 26 },
-    3: { total: 9, manana: 5, tarde: 4, estudiantes: 30 },
-    2: { total: 10, manana: 6, tarde: 4, estudiantes: 30 },
-    1: { total: 10, manana: 5, tarde: 5, estudiantes: 26 },
+    11: { total: 2, manana: 2, tarde: 0, estudiantes: 30 },
+    10: { total: 3, manana: 3, tarde: 0, estudiantes: 30 },
+    9: { total: 3, manana: 1, tarde: 2, estudiantes: 28 },
+    8: { total: 3, manana: 1, tarde: 2, estudiantes: 28 },
+    7: { total: 3, manana: 2, tarde: 1, estudiantes: 28 },
+    6: { total: 3, manana: 2, tarde: 1, estudiantes: 30 },
+    5: { total: 5, manana: 3, tarde: 2, estudiantes: 28 },
+    4: { total: 5, manana: 3, tarde: 2, estudiantes: 26 },
+    3: { total: 5, manana: 3, tarde: 2, estudiantes: 30 },
+    2: { total: 5, manana: 3, tarde: 2, estudiantes: 30 },
+    1: { total: 5, manana: 3, tarde: 2, estudiantes: 26 },
   },
   materias: [
     { nombre: 'Matemáticas', horas: 5, intensidad: '+', desde: 1 },
-    { nombre: 'Física', horas: 5, intensidad: '+', desde: 6 },
-    { nombre: 'Química', horas: 4, intensidad: '+', desde: 6 },
-    { nombre: 'Biología', horas: 4, intensidad: '+', desde: 1 },
-    { nombre: 'Inglés', horas: 2, intensidad: '-', desde: 1 },
-    { nombre: 'Español', horas: 5, intensidad: '+', desde: 1 },
+    { nombre: 'Física', horas: 3, intensidad: '+', desde: 6 },
+    { nombre: 'Química', horas: 3, intensidad: '+', desde: 6 },
+    { nombre: 'Biología', horas: 3, intensidad: '+', desde: 6 },
+    { nombre: 'Ciencias naturales', horas: 4, intensidad: '+', desde: 1, hasta: 5 },
+    { nombre: 'Inglés', horas: 3, intensidad: '-', desde: 1 },
+    { nombre: 'Español', horas: 4, intensidad: '+', desde: 1 },
     { nombre: 'Educación física', horas: 2, intensidad: '-', desde: 1 },
-    { nombre: 'Ética', horas: 2, intensidad: '-', desde: 1 },
-    { nombre: 'Ciencias sociales', horas: 2, intensidad: '-', desde: 1, hasta: 10 },
+    { nombre: 'Ética', horas: 1, intensidad: '-', desde: 1 },
+    { nombre: 'Ciencias sociales', horas: 3, intensidad: '-', desde: 1, hasta: 10 },
     { nombre: 'Filosofía', horas: 2, intensidad: '-', desde: 11 },
     { nombre: 'Informática', horas: 2, intensidad: '-', desde: 1 },
+    { nombre: 'Artística', horas: 3, intensidad: '-', desde: 1, hasta: 5 },
+    { nombre: 'Proyecto de vida', horas: 1, intensidad: '-', desde: 6 },
   ],
 };
 
@@ -141,10 +152,11 @@ function calcularOrganizacion(entrada) {
     reglas: [
       'Los signos + se modelan como materias de mayor intensidad horaria.',
       'La nómina está limitada a 30 docentes y no se pueden contratar docentes adicionales.',
-      'Cada docente trabaja 8 horas diarias durante 5 días (40 horas semanales) y tiene 1 hora diaria de almuerzo fuera de la jornada laboral.',
+      'Cada docente trabaja 8 horas diarias durante 5 días, con 1 hora diaria de almuerzo fuera de la jornada laboral; de esas horas, hasta 34.5 h/semana son de clase efectiva.',
       `Cada docente puede recibir como máximo ${config.horasExtraSemanaMax} hora extra semanal y ${config.horasExtraMesMax} horas extra mensuales.`,
       'Las horas que no puedan cubrirse con los 30 docentes se reportan como pendientes; no se crean docentes adicionales.',
-      'Séptimo quedó configurado con 6 cursos (3 en la mañana y 3 en la tarde), porque esa es la distribución indicada para ese grado.',
+      'La jornada mañana va de 7:00 a 12:00 y la tarde de 13:00 a 18:00, cada una con un receso de 30 minutos; ya no hay horas de "trabajo autónomo": todo bloque de la jornada es una clase real.',
+      'El número de secciones por grado es el máximo físico disponible; "aleatorizar estudiantes" en /personal.html abre o cierra secciones según la matrícula sorteada, sin superar nunca los 30 docentes.',
     ],
   };
 }

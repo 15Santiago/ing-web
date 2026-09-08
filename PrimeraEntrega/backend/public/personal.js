@@ -5,9 +5,26 @@
 // =========================================================
 const DIAS = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes'];
 const DIAS_ETIQUETA = { Lunes: 'Lunes', Martes: 'Martes', Miercoles: 'Miércoles', Jueves: 'Jueves', Viernes: 'Viernes' };
+const MATERIAS_ETIQUETA = {
+  Espanol: 'Español',
+  Matematicas: 'Matemáticas',
+  Ingles: 'Inglés',
+  'Educacion Fisica': 'Educación Física',
+  Etica: 'Ética',
+  Informatica: 'Informática',
+  'Ciencias Sociales': 'Ciencias Sociales',
+  'Ciencias Naturales': 'Ciencias Naturales',
+  Filosofia: 'Filosofía',
+  Fisica: 'Física',
+  Quimica: 'Química',
+  Biologia: 'Biología',
+  Artistica: 'Artística',
+  'Proyecto de vida': 'Proyecto de vida',
+};
 
 let areasCache = [];
 let docentesCache = [];
+let cursosCache = [];
 
 async function api(ruta, opciones = {}) {
   const respuesta = await fetch(ruta, {
@@ -32,20 +49,39 @@ async function cargarDashboard() {
   try {
     const d = await api('/api/dashboard');
     const tarjetas = [
-      ['Cursos', d.totalCursos, `${d.totalEstudiantes} estudiantes`],
+      ['Cursos activos', `${d.cursosActivos} / ${d.totalCursos}`, `${d.totalEstudiantes} estudiantes`],
       ['Docentes activos', d.docentesActivos, `${d.docentesInactivos} inactivos`],
       ['Horas semanales', Math.round(d.horasSemanalesTotales * 100) / 100, 'de clase dictadas'],
       ['Bloques de horario', d.totalBloques, `${d.bloquesVacantes} vacantes`],
       ['Conflictos', d.conflictos, d.conflictos ? 'requieren revisión' : 'sin choques de horario'],
-      ['Jornadas', d.porJornada.map((j) => `${j.jornada === 'Manana' ? 'Mañana' : 'Tarde'}: ${j.cursos}`).join(' · '), 'cursos por jornada'],
+      ['Jornadas', d.porJornada.map((j) => `${j.jornada === 'Manana' ? 'Mañana' : 'Tarde'}: ${j.cursos}`).join(' · '), 'cursos activos por jornada'],
     ];
     document.getElementById('tarjetas-dashboard').innerHTML = tarjetas.map(([titulo, valor, detalle]) => `
       <article class="summary-card ${titulo === 'Conflictos' && d.conflictos ? 'summary-card--alert' : ''}">
         <span>${titulo}</span><strong>${valor}</strong><small>${detalle}</small>
       </article>`).join('');
+    renderNecesidad(d.necesidadDocentes);
   } catch (error) {
     console.error(error);
   }
+}
+
+// ---------------------------------------------------------
+// Docentes necesarios vs. docentes activos hoy, calculado en el
+// servidor contra los cursos activos reales (services/necesidad
+// DocentesService.js), no una simulación aparte.
+// ---------------------------------------------------------
+function renderNecesidad(n) {
+  const panel = document.getElementById('resumen-necesidad');
+  if (!n) { panel.hidden = true; return; }
+  panel.hidden = false;
+  const diferencia = n.docentesActivos - n.docentesNecesarios;
+  let accion = 'La nómina activa coincide con lo que hace falta.';
+  if (diferencia > 0) accion = `Sobran ${diferencia} docente(s): selecciónalos abajo y usa "Despedir seleccionados".`;
+  else if (diferencia < 0) accion = `Faltan ${-diferencia} docente(s): reactiva alguno inactivo o contrata uno nuevo.`;
+  panel.innerHTML = `
+    <h3>Docentes necesarios: ${n.docentesNecesarios} de ${n.docentesDisponibles} máximo</h3>
+    <p>Con ${n.cursosActivos} de ${n.cursosTotales} cursos activos (${n.estudiantesActivos} estudiantes matriculados) hacen falta <strong>${n.docentesNecesarios}</strong> docentes. Hoy hay <strong>${n.docentesActivos}</strong> activos. ${accion}</p>`;
 }
 
 // ---------------------------------------------------------
@@ -53,51 +89,117 @@ async function cargarDashboard() {
 // ---------------------------------------------------------
 async function cargarCursos() {
   const jornada = document.getElementById('filtro-jornada').value;
-  const cursos = await api(`/api/cursos${jornada ? `?jornada=${jornada}` : ''}`);
-  document.getElementById('tabla-cursos').innerHTML = cursos.map((curso) => `
-    <tr>
-      <td><strong>${curso.grado}°${curso.seccion}</strong></td>
-      <td>${curso.jornada === 'Manana' ? 'Mañana' : 'Tarde'}</td>
-      <td>${curso.cupo_maximo}</td>
-      <td><input type="number" min="0" max="${curso.cupo_maximo}" value="${curso.estudiantes}" data-curso-id="${curso.id}" data-cupo="${curso.cupo_maximo}"></td>
-      <td><button class="btn btn--small" data-ver-curso="${curso.id}" type="button">Ver horario</button></td>
-    </tr>`).join('');
+  cursosCache = await api('/api/cursos');
+  const cursosVisibles = jornada ? cursosCache.filter((curso) => curso.jornada === jornada) : cursosCache;
+  llenarSelectorCursosResumen(cursosVisibles);
+  llenarSelectorCursosHorario(cursosCache);
+  renderResumenCurso(cursosVisibles[0]?.id);
+}
 
-  document.querySelectorAll('[data-curso-id]').forEach((input) => {
-    input.addEventListener('change', async () => {
-      const cursoId = input.dataset.cursoId;
-      const cupo = Number(input.dataset.cupo);
-      let valor = Number(input.value);
-      if (valor > cupo) { valor = cupo; input.value = cupo; }
-      try {
-        const curso = cursos.find((c) => String(c.id) === cursoId);
-        await api(`/api/cursos/${cursoId}`, {
-          method: 'PUT',
-          body: JSON.stringify({ grado: curso.grado, seccion: curso.seccion, jornada: curso.jornada, cupoMaximo: cupo, estudiantes: valor }),
-        });
-        cargarDashboard();
-      } catch (error) {
-        alert(error.message);
-        cargarCursos();
-      }
+function etiquetaCurso(curso) {
+  return `${curso.grado}°${curso.seccion} · ${curso.jornada === 'Manana' ? 'Mañana' : 'Tarde'}${curso.activo ? '' : ' (cerrado)'}`;
+}
+
+function llenarSelectorCursosResumen(cursos) {
+  const selector = document.getElementById('selector-curso-resumen');
+  const valorPrevio = selector.value;
+  selector.innerHTML = cursos.length
+    ? cursos.map((curso) => `<option value="${curso.id}">${etiquetaCurso(curso)}</option>`).join('')
+    : '<option value="">No hay cursos para esta jornada</option>';
+  if (cursos.some((curso) => String(curso.id) === valorPrevio)) selector.value = valorPrevio;
+}
+
+function renderResumenCurso(cursoId) {
+  const curso = cursosCache.find((item) => String(item.id) === String(cursoId));
+  const resumen = document.getElementById('resumen-curso-seleccionado');
+  if (!curso) {
+    resumen.innerHTML = '<p class="empty-note">No hay cursos disponibles para esta jornada.</p>';
+    return;
+  }
+  resumen.innerHTML = `
+    <div class="course-summary__identity"><span class="section-number">Curso seleccionado</span><strong>${curso.grado}°${curso.seccion}</strong><span>${curso.jornada === 'Manana' ? 'Mañana' : 'Tarde'}${curso.activo ? '' : ' · <span class="badge badge--inactivo">Cerrado</span>'}</span></div>
+    <dl class="course-summary__facts"><div><dt>Cupo máximo</dt><dd>${curso.cupo_maximo}</dd></div><div><dt>Estudiantes</dt><dd><input id="estudiantes-curso" type="number" min="0" max="${curso.cupo_maximo}" value="${curso.estudiantes}" ${curso.activo ? '' : 'disabled title="Reabre la sección con \'Aleatorizar estudiantes\' o edítala manualmente"'}></dd></div></dl>
+    <button class="btn btn--small" id="btn-ver-curso-resumen" type="button">Ver horario</button>`;
+  document.getElementById('btn-ver-curso-resumen').addEventListener('click', () => mostrarHorarioCurso(curso.id));
+  const inputEstudiantes = document.getElementById('estudiantes-curso');
+  if (curso.activo) inputEstudiantes.addEventListener('change', () => actualizarEstudiantesCurso(curso));
+}
+
+async function actualizarEstudiantesCurso(curso) {
+  const input = document.getElementById('estudiantes-curso');
+  const valor = Math.min(Math.max(Number(input.value) || 0, 0), curso.cupo_maximo);
+  input.value = valor;
+  try {
+    await api(`/api/cursos/${curso.id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ grado: curso.grado, seccion: curso.seccion, jornada: curso.jornada, cupoMaximo: curso.cupo_maximo, estudiantes: valor }),
     });
-  });
-
-  document.querySelectorAll('[data-ver-curso]').forEach((boton) => {
-    boton.addEventListener('click', () => mostrarHorarioCurso(boton.dataset.verCurso));
-  });
+    curso.estudiantes = valor;
+    cargarDashboard();
+  } catch (error) {
+    alert(error.message);
+    cargarCursos();
+  }
 }
 
 async function mostrarHorarioCurso(cursoId) {
-  const curso = await api(`/api/cursos/${cursoId}`);
-  const filas = curso.horario.map((b) => `${DIAS_ETIQUETA[b.dia]} ${horaCorta(b.hora_inicio)}–${horaCorta(b.hora_fin)} · ${b.materia} · ${b.docente_nombre || 'VACANTE'}`).join('\n');
-  alert(`Horario de ${curso.grado}°${curso.seccion} (${curso.estudiantes} estudiantes)\n\n${filas || 'Sin bloques registrados.'}`);
+  document.getElementById('selector-curso-horario').value = cursoId;
+  document.getElementById('dialogo-horario').showModal();
+  await renderHorarioCurso(cursoId);
 }
 
-async function aleatorizarCupos() {
-  await api('/api/cursos/aleatorizar-cupos', { method: 'POST', body: JSON.stringify({}) });
-  cargarCursos();
-  cargarDashboard();
+async function renderHorarioCurso(cursoId) {
+  if (!cursoId) return;
+  const curso = await api(`/api/cursos/${cursoId}`);
+  document.getElementById('resumen-horario-curso').textContent =
+    `${curso.grado}°${curso.seccion} · ${curso.jornada === 'Manana' ? 'Mañana' : 'Tarde'} · ${curso.estudiantes} estudiantes`;
+
+  const bloquesPorHora = new Map();
+  curso.horario.forEach((bloque) => {
+    const clave = `${bloque.hora_inicio}-${bloque.hora_fin}`;
+    if (!bloquesPorHora.has(clave)) {
+      bloquesPorHora.set(clave, { horaInicio: bloque.hora_inicio, horaFin: bloque.hora_fin, porDia: {} });
+    }
+    bloquesPorHora.get(clave).porDia[bloque.dia] = bloque;
+  });
+  const filas = Array.from(bloquesPorHora.values()).sort((a, b) => a.horaInicio.localeCompare(b.horaInicio));
+  const grid = document.getElementById('grid-horario-curso');
+  grid.innerHTML = filas.length ? `
+    <thead><tr><th>Hora</th>${DIAS.map((dia) => `<th>${DIAS_ETIQUETA[dia]}</th>`).join('')}</tr></thead>
+    <tbody>${filas.map((fila) => `<tr>
+      <td><strong>${horaCorta(fila.horaInicio)}–${horaCorta(fila.horaFin)}</strong></td>
+      ${DIAS.map((dia) => {
+        const bloque = fila.porDia[dia];
+        if (!bloque) return '<td class="empty">—</td>';
+        const detalle = `Clase · ${bloque.docente_nombre || 'Docente vacante'}`;
+        return `<td><div class="schedule-cell"><strong>${MATERIAS_ETIQUETA[bloque.materia] || bloque.materia}</strong><small>${detalle}</small></div></td>`;
+      }).join('')}
+    </tr>`).join('')}</tbody>` : '<tbody><tr><td colspan="6" class="empty-note">Este curso no tiene bloques de horario registrados.</td></tr></tbody>';
+}
+
+function llenarSelectorCursosHorario(cursos) {
+  const selector = document.getElementById('selector-curso-horario');
+  const valorPrevio = selector.value;
+  selector.innerHTML = cursos.length
+    ? cursos.map((curso) => `<option value="${curso.id}">${etiquetaCurso(curso)}</option>`).join('')
+    : '<option value="">No hay cursos para esta jornada</option>';
+  if (cursos.some((curso) => String(curso.id) === valorPrevio)) selector.value = valorPrevio;
+}
+
+async function aleatorizarEstudiantes() {
+  const boton = document.getElementById('btn-aleatorizar');
+  boton.disabled = true;
+  try {
+    const resultado = await api('/api/cursos/aleatorizar-estudiantes', { method: 'POST', body: JSON.stringify({}) });
+    renderNecesidad(resultado.necesidadDocentes);
+    await cargarCursos();
+    await cargarDashboard();
+    await cargarVacantes();
+  } catch (error) {
+    alert(error.message);
+  } finally {
+    boton.disabled = false;
+  }
 }
 
 // ---------------------------------------------------------
@@ -115,7 +217,10 @@ async function cargarDocentes() {
       <td>${Math.round(d.horas_asignadas * 100) / 100} h</td>
       <td>${d.horas_contratadas} h</td>
       <td><span class="badge ${d.activo ? 'badge--activo' : 'badge--inactivo'}">${d.activo ? 'Activo' : 'Inactivo'}</span></td>
-      <td><button class="btn btn--small" data-ver-docente="${d.id}" type="button">Ver horario</button></td>
+      <td>
+        <button class="btn btn--small" data-ver-docente="${d.id}" type="button">Ver horario</button>
+        ${d.activo ? '' : `<button class="btn btn--small btn--primary" data-activar-docente="${d.id}" type="button">Reactivar</button>`}
+      </td>
     </tr>`).join('');
 
   document.querySelectorAll('[data-ver-docente]').forEach((boton) => {
@@ -124,6 +229,10 @@ async function cargarDocentes() {
       cargarHorarioDocente(boton.dataset.verDocente);
       document.getElementById('titulo-horario-docente').scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
+  });
+
+  document.querySelectorAll('[data-activar-docente]').forEach((boton) => {
+    boton.addEventListener('click', () => activarDocente(boton.dataset.activarDocente));
   });
 
   document.querySelectorAll('.check-docente').forEach((casilla) => {
@@ -153,6 +262,16 @@ async function despedirSeleccionados() {
     cargarDocentes();
     cargarDashboard();
     cargarVacantes();
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+async function activarDocente(id) {
+  try {
+    await api(`/api/docentes/${id}/activar`, { method: 'POST' });
+    cargarDocentes();
+    cargarDashboard();
   } catch (error) {
     alert(error.message);
   }
@@ -321,7 +440,8 @@ async function iniciar() {
   document.getElementById('btn-refrescar').addEventListener('click', cargarDashboard);
   document.getElementById('btn-refrescar-vacantes').addEventListener('click', cargarVacantes);
   document.getElementById('filtro-jornada').addEventListener('change', cargarCursos);
-  document.getElementById('btn-aleatorizar').addEventListener('click', aleatorizarCupos);
+  document.getElementById('selector-curso-resumen').addEventListener('change', (e) => renderResumenCurso(e.target.value));
+  document.getElementById('btn-aleatorizar').addEventListener('click', aleatorizarEstudiantes);
   document.getElementById('filtro-estado').addEventListener('change', cargarDocentes);
   document.getElementById('btn-despedir').addEventListener('click', despedirSeleccionados);
   document.getElementById('form-contratacion').addEventListener('submit', contratarDocente);
@@ -330,6 +450,12 @@ async function iniciar() {
     document.querySelectorAll('.check-docente').forEach((c) => { c.checked = e.target.checked; });
     actualizarBotonDespedir();
   });
+  document.getElementById('selector-curso-horario').addEventListener('change', (e) => {
+    const curso = cursosCache.find((item) => String(item.id) === e.target.value);
+    if (!curso) return;
+    renderHorarioCurso(curso.id);
+  });
+  document.getElementById('cerrar-dialogo-horario').addEventListener('click', () => document.getElementById('dialogo-horario').close());
 
   await llenarAreas();
   await cargarDashboard();

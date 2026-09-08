@@ -145,7 +145,7 @@ El cuerpo del `POST` es opcional y permite probar otros escenarios:
 ```json
 {
   "docentesDisponibles": 30,
-  "horasTrabajoDocenteSemana": 40,
+  "horasTrabajoDocenteSemana": 34.5,
   "semanasAnioLectivo": 40,
   "horasExtraSemanaMax": 1,
   "horasExtraMesMax": 4
@@ -153,18 +153,19 @@ El cuerpo del `POST` es opcional y permite probar otros escenarios:
 ```
 
 La configuración inicial interpreta `+` como mayor intensidad horaria y `-` como menor intensidad.
-Séptimo queda con 6 cursos, 3 en cada jornada, porque esa es la distribución indicada en los datos.
 La nómina está limitada a 30 docentes: no se contratan docentes adicionales. Cada docente tiene
-40 horas normales semanales, 1 hora extra semanal como máximo y 4 horas extra mensuales como máximo;
-la hora diaria de almuerzo queda fuera de las 8 horas laborales. Con los valores iniciales se calculan
-79 cursos, 2.242 estudiantes, 2.184 horas semanales, 55 docentes necesarios y 974 horas semanales
-pendientes que no pueden cubrirse con los 30 docentes permitidos.
+8 horas diarias con 1 hora de almuerzo (35 h/semana en el colegio), de las que hasta 34.5 h son de
+clase efectiva; además hasta 1 hora extra semanal y 4 horas extra mensuales. Este simulador no
+distingue especialidad por área (cualquier docente puede cubrir cualquier materia), así que sus
+números son solo un estimado rápido — para la planta real, con docentes especializados por área,
+usa `/personal.html` (ver abajo), que sí llega exactamente a 30 docentes con la matrícula máxima.
 
 ### API de personal docente y horarios (con base de datos real)
 
 Vista en `http://localhost:3000/personal.html` (botón **Personal docente y horarios** del boletín).
-A diferencia del simulador anterior, todo aquí lee y escribe en MySQL: 79 cursos, 30 docentes y
-los bloques de horario reales (uno por cada clase de 45 minutos, con su curso/materia/día/hora),
+A diferencia del simulador anterior, todo aquí lee y escribe en MySQL: hasta 42 cursos (secciones),
+un máximo de 30 docentes y los bloques de horario reales (uno por cada clase de 45 minutos, con su
+curso/materia/día/hora — ya no hay bloques de "trabajo autónomo": toda la jornada son clases),
 cargados con `npm run seed` desde `database/seed/data/*.csv` (extraídos de `Horario_Colegio.xlsx`).
 Si el Excel cambia (correcciones al horario, nuevos docentes, etc.), vuelve a extraer esas hojas a
 CSV en `database/seed/data/` y corre `npm run seed` de nuevo para refrescar la base de datos.
@@ -173,15 +174,27 @@ CSV en `database/seed/data/` y corre `npm run seed` de nuevo para refrescar la b
 |---|---|
 | Áreas | `GET /api/areas` |
 | Materias | `GET/POST /api/materias`, `PUT/DELETE /api/materias/:id`, `POST/PUT/DELETE /api/materias/plan[/:id]` (intensidad horaria por nivel) |
-| Cursos | `GET/POST /api/cursos` (filtros `?jornada=&grado=`), `GET/PUT/DELETE /api/cursos/:id`, `POST /api/cursos/aleatorizar-cupos` |
-| Docentes | `GET/POST /api/docentes` (filtros `?activo=&areaId=`), `GET/PUT/DELETE /api/docentes/:id`, `POST /api/docentes/despedir`, `POST /api/docentes/:id/asignar-vacantes` |
+| Cursos | `GET/POST /api/cursos` (filtros `?jornada=&grado=&activo=`), `GET/PUT/DELETE /api/cursos/:id`, `POST /api/cursos/aleatorizar-estudiantes` |
+| Docentes | `GET/POST /api/docentes` (filtros `?activo=&areaId=`), `GET/PUT/DELETE /api/docentes/:id`, `POST /api/docentes/despedir`, `POST /api/docentes/:id/activar`, `POST /api/docentes/:id/asignar-vacantes` |
 | Horarios | `GET/POST /api/horarios` (filtros `?cursoId=&docenteId=&materiaId=&jornada=&dia=&vacantes=true`), `GET /api/horarios/conflictos`, `PUT/DELETE /api/horarios/:id`, `PUT /api/horarios/:id/asignar` |
 | Dashboard | `GET /api/dashboard` |
+
+**Aleatorizar estudiantes** (`POST /api/cursos/aleatorizar-estudiantes`) sortea, por grado, una
+matrícula total acotada entre el 50% y el 100% de la capacidad física del grado (secciones ya
+creadas × cupo máximo por sección), calcula cuántas secciones hacen falta para esa matrícula (sin
+superar las secciones creadas) y abre/cierra secciones en consecuencia: las que se cierran quedan
+en 0 estudiantes y sus bloques de horario se vacían. La respuesta incluye `necesidadDocentes`, el
+número real de docentes que hace falta (calculado contra los cursos activos y agrupado por área,
+igual que expone `GET /api/dashboard`), siempre acotado a un máximo de 30. Si sobran docentes
+activos frente a lo necesario, despídelos desde la interfaz; si faltan, reactiva alguno inactivo
+(`POST /api/docentes/:id/activar`) o contrata uno nuevo.
 
 **Despedir docentes** (`POST /api/docentes/despedir` con `{ "ids": ["MAT-FIS-01", "MAT-FIS-02"] }`)
 marca a esos docentes como inactivos y deja sus bloques de horario vacantes (`docente_id = NULL`),
 devolviendo el impacto: cuántos bloques y qué cursos quedaron afectados, con materia/día/hora de
-cada clase sin cubrir.
+cada clase sin cubrir. **Reactivar** (`POST /api/docentes/:id/activar`) los vuelve a poner activos
+(por si después hacen falta de nuevo); sus clases anteriores quedaron vacantes y se cubren desde
+"Bloques vacantes", para no reasignarlas a ciegas y generar choques de horario.
 
 **Contratar** (`POST /api/docentes` con `{ "nombre", "areaId", "horasContratadas" }`) crea el
 docente (si no se manda `id`, se genera uno correlativo dentro de su área, ej. `MAT-FIS-07`). Para
@@ -193,9 +206,9 @@ valida que no choque con otra clase suya y que no supere sus horas contratadas.
 diseño con las llaves `UNIQUE (curso_id, dia, hora_inicio)` y `UNIQUE (docente_id, dia, hora_inicio)`
 de la tabla `horarios`; `GET /api/horarios/conflictos` los expone explícitamente para el dashboard.
 
-El número de estudiantes de un curso se trata como variable aleatoria acotada por su cupo máximo:
-se genera al azar (entre 75% y 100% del cupo) en el seed y cada vez que se llama a
-`POST /api/cursos/aleatorizar-cupos`; también se puede fijar a mano con `PUT /api/cursos/:id`.
+El número de estudiantes de un curso es una variable aleatoria acotada por su cupo máximo: se
+genera al azar (entre 75% y 100% del cupo) en el seed, se recalcula por grado con
+`POST /api/cursos/aleatorizar-estudiantes`, y también se puede fijar a mano con `PUT /api/cursos/:id`.
 
 ### Formato de las respuestas
 

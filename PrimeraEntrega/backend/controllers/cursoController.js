@@ -1,11 +1,13 @@
 // =========================================================
-// Gestión de cursos: grado, sección, jornada y número de
-// estudiantes. Incluye la "aleatorización" del número de
-// estudiantes matriculados (variable aleatoria, acotada por
-// el cupo máximo del curso) y la consulta del horario de un
-// curso puntual.
+// Gestión de cursos: grado, sección, jornada, número de
+// estudiantes y si la sección está activa (abierta) o cerrada.
+// Incluye "aleatorizar estudiantes" (variable aleatoria por
+// grado, acotada por la capacidad física de secciones creadas)
+// que abre/cierra secciones para que la nómina de docentes que
+// hace falta nunca supere el límite de configuracion_colegio.
 // =========================================================
 const { pool } = require('../config/db');
+const { calcularNecesidadDocentes } = require('../services/necesidadDocentesService');
 
 function estudiantesAleatorios(cupoMaximo) {
   const minimo = Math.max(1, Math.round(cupoMaximo * 0.75));
@@ -13,19 +15,20 @@ function estudiantesAleatorios(cupoMaximo) {
 }
 
 // ---------------------------------------------------------
-// GET /api/cursos?jornada=&grado=
+// GET /api/cursos?jornada=&grado=&activo=
 // ---------------------------------------------------------
 async function consultarTodos(req, res) {
   try {
-    const { jornada, grado } = req.query;
+    const { jornada, grado, activo } = req.query;
     const condiciones = [];
     const parametros = [];
     if (jornada) { condiciones.push('jornada = ?'); parametros.push(jornada); }
     if (grado) { condiciones.push('grado = ?'); parametros.push(grado); }
+    if (activo !== undefined) { condiciones.push('activo = ?'); parametros.push(activo === 'true' ? 1 : 0); }
     const where = condiciones.length ? `WHERE ${condiciones.join(' AND ')}` : '';
 
     const [cursos] = await pool.query(
-      `SELECT id, grado, seccion, jornada, cupo_maximo, estudiantes
+      `SELECT id, grado, seccion, jornada, cupo_maximo, estudiantes, activo
        FROM cursos ${where}
        ORDER BY grado, seccion`,
       parametros
@@ -135,28 +138,91 @@ async function eliminar(req, res) {
 }
 
 // ---------------------------------------------------------
-// POST /api/cursos/aleatorizar-cupos
-// Recalcula "estudiantes" para todos los cursos (o uno solo si
-// se manda cursoId), entre el 75% y el 100% del cupo máximo.
+// POST /api/cursos/aleatorizar-estudiantes
+// Para cada grado, sortea una matrícula total acotada entre el
+// 50% y el 100% de la capacidad física del grado (secciones ya
+// creadas x cupo máximo), calcula cuántas secciones hacen falta
+// para esa matrícula (sin superar las secciones creadas) y
+// abre/cierra secciones en consecuencia. Las secciones que se
+// cierran quedan con 0 estudiantes y sus bloques de horario se
+// vacían (docente_id = NULL): así la nómina que hace falta nunca
+// supera el límite de docentes disponibles, y quien reabra una
+// sección después la cubre desde "Bloques vacantes".
 // ---------------------------------------------------------
-async function aleatorizarCupos(req, res) {
+const FRACCION_MINIMA_MATRICULA = 0.5;
+
+async function aleatorizarEstudiantes(req, res) {
+  const conexion = await pool.getConnection();
   try {
-    const { cursoId } = req.body || {};
-    const [cursos] = await pool.query(
-      cursoId ? 'SELECT id, cupo_maximo FROM cursos WHERE id = ?' : 'SELECT id, cupo_maximo FROM cursos',
-      cursoId ? [cursoId] : []
+    await conexion.beginTransaction();
+
+    const [grados] = await conexion.query(
+      'SELECT grado, COUNT(*) AS secciones, MAX(cupo_maximo) AS cupo FROM cursos GROUP BY grado ORDER BY grado'
     );
-    if (cursoId && cursos.length === 0) {
-      return res.status(404).json({ mensaje: 'Curso no encontrado.' });
+
+    const resumenPorGrado = [];
+    for (const fila of grados) {
+      // eslint-disable-next-line no-await-in-loop
+      const [secciones] = await conexion.query(
+        'SELECT id, seccion FROM cursos WHERE grado = ? ORDER BY seccion',
+        [fila.grado]
+      );
+
+      const capacidadTotal = fila.secciones * fila.cupo;
+      const minimo = Math.round(capacidadTotal * FRACCION_MINIMA_MATRICULA);
+      const totalEstudiantes = minimo + Math.floor(Math.random() * (capacidadTotal - minimo + 1));
+      const seccionesNecesarias = Math.min(fila.secciones, Math.max(1, Math.ceil(totalEstudiantes / fila.cupo)));
+
+      let restante = totalEstudiantes;
+      const actualizaciones = secciones.map((seccion, indice) => {
+        if (indice >= seccionesNecesarias) {
+          return { id: seccion.id, activo: false, estudiantes: 0 };
+        }
+        const seccionesQueQuedan = seccionesNecesarias - indice;
+        const estudiantesSeccion = Math.max(0, Math.min(fila.cupo, Math.round(restante / seccionesQueQuedan)));
+        restante -= estudiantesSeccion;
+        return { id: seccion.id, activo: true, estudiantes: estudiantesSeccion };
+      });
+
+      for (const c of actualizaciones) {
+        // eslint-disable-next-line no-await-in-loop
+        await conexion.query(
+          'UPDATE cursos SET activo = ?, estudiantes = ? WHERE id = ?',
+          [c.activo, c.estudiantes, c.id]
+        );
+      }
+
+      const idsCerrados = actualizaciones.filter((c) => !c.activo).map((c) => c.id);
+      if (idsCerrados.length) {
+        // eslint-disable-next-line no-await-in-loop
+        await conexion.query('UPDATE horarios SET docente_id = NULL WHERE curso_id IN (?) AND docente_id IS NOT NULL', [idsCerrados]);
+      }
+
+      resumenPorGrado.push({
+        grado: fila.grado,
+        seccionesTotales: fila.secciones,
+        seccionesActivas: seccionesNecesarias,
+        cupoMaximo: fila.cupo,
+        estudiantes: totalEstudiantes,
+      });
     }
-    for (const curso of cursos) {
-      await pool.query('UPDATE cursos SET estudiantes = ? WHERE id = ?', [estudiantesAleatorios(curso.cupo_maximo), curso.id]);
-    }
-    const [actualizados] = await pool.query('SELECT * FROM cursos ORDER BY grado, seccion');
-    return res.status(200).json(actualizados);
+
+    await conexion.commit();
+
+    const [cursosActualizados] = await pool.query('SELECT * FROM cursos ORDER BY grado, seccion');
+    const necesidad = await calcularNecesidadDocentes();
+
+    return res.status(200).json({
+      cursos: cursosActualizados,
+      porGrado: resumenPorGrado,
+      necesidadDocentes: necesidad,
+    });
   } catch (error) {
-    console.error('Error en aleatorizarCupos():', error);
-    return res.status(500).json({ mensaje: 'Error interno al aleatorizar los cupos.' });
+    await conexion.rollback();
+    console.error('Error en aleatorizarEstudiantes():', error);
+    return res.status(500).json({ mensaje: 'Error interno al aleatorizar los estudiantes.' });
+  } finally {
+    conexion.release();
   }
 }
 
@@ -166,5 +232,5 @@ module.exports = {
   crear,
   actualizar,
   eliminar,
-  aleatorizarCupos,
+  aleatorizarEstudiantes,
 };

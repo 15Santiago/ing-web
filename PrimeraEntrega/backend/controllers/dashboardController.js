@@ -2,11 +2,13 @@
 // Dashboard: información general de la programación académica.
 // =========================================================
 const { pool } = require('../config/db');
+const { calcularNecesidadDocentes } = require('../services/necesidadDocentesService');
 
 async function resumen(req, res) {
   try {
     const [[cursos]] = await pool.query(
-      `SELECT COUNT(*) AS totalCursos, COALESCE(SUM(estudiantes), 0) AS totalEstudiantes,
+      `SELECT COUNT(*) AS totalCursos, SUM(activo = TRUE) AS cursosActivos,
+              COALESCE(SUM(estudiantes), 0) AS totalEstudiantes,
               COALESCE(SUM(cupo_maximo), 0) AS capacidadTotal
        FROM cursos`
     );
@@ -17,15 +19,17 @@ async function resumen(req, res) {
        FROM docentes`
     );
     const [[horas]] = await pool.query(
-      `SELECT COALESCE(SUM(TIMESTAMPDIFF(MINUTE, hora_inicio, hora_fin)) / 60, 0) AS horasSemanalesTotales,
+      `SELECT COALESCE(SUM(TIMESTAMPDIFF(MINUTE, h.hora_inicio, h.hora_fin)) / 60, 0) AS horasSemanalesTotales,
               COUNT(*) AS totalBloques,
-              SUM(docente_id IS NULL) AS bloquesVacantes
-       FROM horarios`
+              SUM(h.docente_id IS NULL AND c.activo = TRUE) AS bloquesVacantes
+       FROM horarios h
+       JOIN cursos c ON c.id = h.curso_id`
     );
     const [porJornada] = await pool.query(
       `SELECT jornada, COUNT(*) AS cursos, COALESCE(SUM(estudiantes), 0) AS estudiantes
-       FROM cursos GROUP BY jornada`
+       FROM cursos WHERE activo = TRUE GROUP BY jornada`
     );
+    const necesidadDocentes = await calcularNecesidadDocentes();
     const [porArea] = await pool.query(
       `SELECT a.codigo, a.nombre, COUNT(d.id) AS docentes,
               COALESCE(SUM(d.activo = TRUE), 0) AS activos
@@ -47,6 +51,7 @@ async function resumen(req, res) {
 
     return res.status(200).json({
       totalCursos: cursos.totalCursos,
+      cursosActivos: Number(cursos.cursosActivos || 0),
       totalEstudiantes: cursos.totalEstudiantes,
       capacidadTotal: cursos.capacidadTotal,
       docentesActivos: Number(docentes.activos || 0),
@@ -57,6 +62,7 @@ async function resumen(req, res) {
       porJornada,
       porArea,
       conflictos: Number(conflictosDocente.total) + Number(conflictosCurso.total),
+      necesidadDocentes,
     });
   } catch (error) {
     console.error('Error en resumen() [dashboard]:', error);
