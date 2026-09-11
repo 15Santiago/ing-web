@@ -3,29 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Horarios por curso</title>
+  <title>Gestión por curso</title>
   <link rel="stylesheet" href="personal.css">
 </head>
 <body>
   <header class="planner-header">
     <div>
       <p class="eyebrow">Programación académica · Datos reales del colegio</p>
-      <h1>Horarios de estudiantes por curso</h1>
+      <h1>Gestión por curso</h1>
       <p>Aleatoriza la matrícula de estudiantes, mira cuántos docentes hacen falta (máximo 30) y consulta el horario semanal de cada curso.</p>
     </div>
     <a href="/" class="back-link">← Volver al inicio</a>
   </header>
 
   <main>
+    <section class="panel" aria-labelledby="titulo-dashboard">
+      <div class="section-heading">
+        <div><span class="section-number">01</span><h2 id="titulo-dashboard">Dashboard general</h2></div>
+        <button class="btn btn--small" id="btn-refrescar" type="button">Refrescar ↻</button>
+      </div>
+      <div id="tarjetas-dashboard" class="summary-grid"></div>
+    </section>
+
     <section class="panel" aria-labelledby="titulo-cursos">
       <div class="section-heading">
-        <div><span class="section-number">01</span><h2 id="titulo-cursos">Cursos</h2></div>
+        <div><span class="section-number">02</span><h2 id="titulo-cursos">Cursos</h2></div>
         <div class="toolbar">
           <select id="filtro-jornada"><option value="">Todas las jornadas</option><option value="Manana">Mañana</option><option value="Tarde">Tarde</option></select>
           <button class="btn" id="btn-aleatorizar" type="button">Aleatorizar estudiantes</button>
         </div>
       </div>
-      <p class="section-note">La matrícula de cada grado es una variable aleatoria acotada por la capacidad física de secciones ya creadas. "Aleatorizar estudiantes" sortea esa matrícula, abre o cierra secciones según haga falta y recalcula cuántos docentes se necesitan (máximo 30).</p>
+      <p class="section-note">La matrícula de cada grado es una variable aleatoria acotada por la capacidad física de secciones ya creadas. "Aleatorizar estudiantes" sortea esa matrícula, abre o cierra secciones según haga falta y activa o desactiva automáticamente a los docentes que sobren o falten por área (máximo 30 en nómina).</p>
+      <p class="feedback" id="mensaje-aleatorizar" role="status"></p>
       <div id="resumen-necesidad" class="impact-card" hidden></div>
       <div class="course-browser" aria-label="Resumen de cursos">
         <label class="course-browser__selector" for="selector-curso-resumen">Curso
@@ -51,8 +60,17 @@
         <table class="schedule-grid course-schedule-grid" id="grid-horario-curso"></table>
       </div>
     </dialog>
+
+    <section class="panel" aria-labelledby="titulo-malla-materias">
+      <div class="section-heading">
+        <div><span class="section-number">03</span><h2 id="titulo-malla-materias">Asignaturas e intensidad horaria</h2></div>
+      </div>
+      <p class="section-note">Malla de asignaturas por componente (área) y grado: bloques y horas semanales de cada una, más cuántos cursos activos la reciben y cuántos docentes hacen falta solo para esa materia, con subtotales por componente y el total general.</p>
+      <div class="malla-wrap" id="malla-materias-cursos"></div>
+    </section>
   </main>
 
+  <script src="malla-materias.js" defer></script>
   <script src="cursos-horario.js" defer></script>
 </body>
 </html>

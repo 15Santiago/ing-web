@@ -9,9 +9,13 @@ estático) y `DB/` (schema.sql y el seed) — ver el diagrama completo más abaj
 ```
 PrimeraEntrega/
 ├── frontend/                      # Front end estático, servido tal cual por server.js
-│   ├── index.html / styles.css / script.js       # Boletín de notas (app original)
-│   ├── organizacion.html / .css / .js            # Simulador de planeación (sin BD)
-│   └── personal.html / .css / .js                # Gestión real de personal y horarios (con BD)
+│   ├── index.html                                    # Panel principal (Gestor Académico), enlaza las otras 3
+│   ├── home.css / home.js                            # Estilos y estadísticas en vivo del panel principal
+│   ├── boletin.html / styles.css / script.js          # Boletín de notas (app original)
+│   ├── docentes-horario.html / docentes-horario.js    # Gestión de docentes: dashboard, CRUD, horario, bitácora
+│   ├── cursos-horario.html / cursos-horario.js        # Gestión por curso: matrícula, necesidad de docentes, horario
+│   ├── personal.css                                   # Compartido por docentes-horario y cursos-horario
+│   └── malla-materias.js                              # Malla de asignaturas, compartida por las dos anteriores
 ├── DB/                             # Todo lo de base de datos, fuera del código del servidor
 │   ├── schema.sql                  # notasAcademicas: Estudiantes + programación académica real
 │   └── seed/
@@ -22,21 +26,20 @@ PrimeraEntrega/
     │   └── db.js                     # Conexión (pool) a MySQL
     ├── controllers/
     │   ├── estudianteController.js   # Lógica de cada endpoint (notas)
-    │   ├── organizacionController.js # Simulador anterior (no persiste en BD)
-    │   ├── areaController.js         # Catálogo de áreas/especialidades
+    │   ├── areaController.js         # Catálogo de áreas/especialidades + horas sugeridas para contratar
     │   ├── materiaController.js      # CRUD de asignaturas + intensidad horaria
     │   ├── cursoController.js        # CRUD de cursos + aleatorizar estudiantes
-    │   ├── docenteController.js      # CRUD docentes + despedir/activar/asignar vacantes
+    │   ├── docenteController.js      # CRUD docentes + despedir/activar/asignar vacantes + bitácora
     │   ├── horarioController.js      # CRUD horarios + consultas + conflictos
     │   └── dashboardController.js    # Resumen general de la programación
     ├── models/
     │   └── Estudiante.js              # Clase POO: promedio, aprobación, rendimiento
     ├── routes/
-    │   ├── estudianteRoutes.js, organizacionRoutes.js
-    │   └── areaRoutes.js, materiaRoutes.js, cursoRoutes.js, docenteRoutes.js, horarioRoutes.js, dashboardRoutes.js
+    │   ├── estudianteRoutes.js, areaRoutes.js, materiaRoutes.js, cursoRoutes.js
+    │   └── docenteRoutes.js, horarioRoutes.js, dashboardRoutes.js
     ├── services/
-    │   ├── organizacionService.js         # Cálculo de cargas y asignaciones (simulador)
-    │   └── necesidadDocentesService.js    # Docentes necesarios contra la BD real (no simulado)
+    │   ├── necesidadDocentesService.js    # Docentes necesarios, balanceo automático de nómina y horas sugeridas por área
+    │   └── docenteLogService.js           # Bitácora: contrataciones, despidos, recontrataciones, actualizaciones
     ├── .env.example
     ├── package.json
     └── server.js                      # Sirve ../frontend (estático) + la API
@@ -110,9 +113,10 @@ Deberías ver:
    API:        http://localhost:3000/api/estudiantes
 ```
 
-Abre **http://localhost:3000/** en el navegador: ahí verás directamente tu formulario
-(`index.html`), ya conectado a la base de datos real. No hace falta abrir `index.html`
-con doble clic ni con Live Server — todo se sirve desde este mismo servidor.
+Abre **http://localhost:3000/** en el navegador: ahí verás el panel principal
+(`index.html`), con acceso al boletín de notas, la gestión de docentes y la gestión por
+curso, ya conectados a la base de datos real. No hace falta abrir ningún archivo con doble
+clic ni con Live Server — todo se sirve desde este mismo servidor.
 
 Para desarrollo con recarga automática:
 
@@ -120,7 +124,7 @@ Para desarrollo con recarga automática:
 npm run dev
 ```
 
-## 6. Endpoints (coinciden con lo que llama script.js)
+## 6. Endpoints de estudiantes (coinciden con lo que llama script.js)
 
 Base URL: `http://localhost:3000/api/estudiantes`
 
@@ -136,80 +140,57 @@ Extra (no usados por el front actual, pero disponibles si los necesitas):
 - `GET /:id` — consulta un estudiante puntual
 - `GET /api/health` — verifica que el servidor está vivo
 
-### API de organización académica
+### Gestión de docentes y gestión por curso (con base de datos real)
 
-La nueva vista está disponible en `http://localhost:3000/organizacion.html` y también desde
-el botón **Organizar docentes y horarios** del boletín.
-
-- `GET /api/organizacion/configuracion` — devuelve cursos, jornadas, estudiantes y materias.
-- `POST /api/organizacion/planificar` — calcula horas semanales/anuales, distribución por jornada,
-  docentes requeridos, faltantes y carga individual de cada docente.
-
-El cuerpo del `POST` es opcional y permite probar otros escenarios:
-
-```json
-{
-  "docentesDisponibles": 30,
-  "horasTrabajoDocenteSemana": 34.5,
-  "semanasAnioLectivo": 40,
-  "horasExtraSemanaMax": 1,
-  "horasExtraMesMax": 4
-}
-```
-
-La configuración inicial interpreta `+` como mayor intensidad horaria y `-` como menor intensidad.
-La nómina está limitada a 30 docentes: no se contratan docentes adicionales. Cada docente tiene
-8 horas diarias con 1 hora de almuerzo (35 h/semana en el colegio), de las que hasta 34.5 h son de
-clase efectiva; además hasta 1 hora extra semanal y 4 horas extra mensuales. Este simulador no
-distingue especialidad por área (cualquier docente puede cubrir cualquier materia), así que sus
-números son solo un estimado rápido — para la planta real, con docentes especializados por área,
-usa `/personal.html` (ver abajo), que sí llega exactamente a 30 docentes con la matrícula máxima.
-
-### API de personal docente y horarios (con base de datos real)
-
-Vista en `http://localhost:3000/personal.html` (botón **Personal docente y horarios** del boletín).
-A diferencia del simulador anterior, todo aquí lee y escribe en MySQL: hasta 42 cursos (secciones),
-un máximo de 30 docentes y los bloques de horario reales (uno por cada clase de 45 minutos, con su
-curso/materia/día/hora — ya no hay bloques de "trabajo autónomo": toda la jornada son clases),
+Dos vistas, ambas leen y escriben en MySQL: `http://localhost:3000/docentes-horario.html`
+(dashboard general, CRUD de docentes, horario semanal por docente y bitácora de movimientos)
+y `http://localhost:3000/cursos-horario.html` (matrícula por curso, necesidad de docentes y
+horario semanal por curso). Ambas comparten la malla de asignaturas e intensidad horaria
+(`malla-materias.js`, agrupada por área/componente y grado, con cuántos cursos recibe cada
+materia y cuántos docentes hacen falta solo para ella). Hasta 42 cursos (secciones), un máximo
+de 30 docentes y los bloques de horario reales (uno por cada clase de 45 minutos, con su
+curso/materia/día/hora — no hay bloques de "trabajo autónomo": toda la jornada son clases),
 cargados con `npm run seed` desde `../DB/seed/data/*.csv` (extraídos de `Horario_Colegio.xlsx`).
-Si el Excel cambia (correcciones al horario, nuevos docentes, etc.), vuelve a extraer esas hojas a
-CSV en `../DB/seed/data/` y corre `npm run seed` de nuevo para refrescar la base de datos.
+Si el Excel cambia (correcciones al horario, nuevos docentes, etc.), vuelve a extraer esas hojas
+a CSV en `../DB/seed/data/` y corre `npm run seed` de nuevo para refrescar la base de datos.
 
 | Recurso | Endpoints |
 |---|---|
-| Áreas | `GET /api/areas` |
+| Áreas | `GET /api/areas`, `GET /api/areas/:id/horas-sugeridas` (horas que conviene contratarle a un docente nuevo de esa área, según lo que haga falta ahí) |
 | Materias | `GET/POST /api/materias`, `PUT/DELETE /api/materias/:id`, `POST/PUT/DELETE /api/materias/plan[/:id]` (intensidad horaria por nivel) |
 | Cursos | `GET/POST /api/cursos` (filtros `?jornada=&grado=&activo=`), `GET/PUT/DELETE /api/cursos/:id`, `POST /api/cursos/aleatorizar-estudiantes` |
-| Docentes | `GET/POST /api/docentes` (filtros `?activo=&areaId=`), `GET/PUT/DELETE /api/docentes/:id`, `POST /api/docentes/despedir`, `POST /api/docentes/:id/activar`, `POST /api/docentes/:id/asignar-vacantes` |
-| Horarios | `GET/POST /api/horarios` (filtros `?cursoId=&docenteId=&materiaId=&jornada=&dia=&vacantes=true`), `GET /api/horarios/conflictos`, `PUT/DELETE /api/horarios/:id`, `PUT /api/horarios/:id/asignar` |
+| Docentes | `GET/POST /api/docentes` (filtros `?activo=&areaId=`), `GET/PUT/DELETE /api/docentes/:id`, `POST /api/docentes/despedir`, `POST /api/docentes/:id/activar`, `POST /api/docentes/:id/asignar-vacantes`, `GET /api/docentes/log` (bitácora, filtros `?docenteId=&limite=`) |
+| Horarios | `GET/POST /api/horarios` (filtros `?cursoId=&docenteId=&materiaId=&jornada=&dia=&vacantes=true`), `GET /api/horarios/conflictos`, `PUT/DELETE /api/horarios/:id`, `PUT /api/horarios/:id/asignar` — hoy sin interfaz propia (se dejó de exponer "Bloques vacantes" en el front), pero disponibles para integraciones o una futura vista |
 | Dashboard | `GET /api/dashboard` |
 
-**Aleatorizar estudiantes** (`POST /api/cursos/aleatorizar-estudiantes`) sortea, por grado, una
-matrícula total acotada entre el 50% y el 100% de la capacidad física del grado (secciones ya
-creadas × cupo máximo por sección), calcula cuántas secciones hacen falta para esa matrícula (sin
-superar las secciones creadas) y abre/cierra secciones en consecuencia: las que se cierran quedan
-en 0 estudiantes y sus bloques de horario se vacían. La respuesta incluye `necesidadDocentes`, el
-número real de docentes que hace falta (calculado contra los cursos activos y agrupado por área,
-igual que expone `GET /api/dashboard`), siempre acotado a un máximo de 30. Si sobran docentes
-activos frente a lo necesario, despídelos desde la interfaz; si faltan, reactiva alguno inactivo
-(`POST /api/docentes/:id/activar`) o contrata uno nuevo.
+**Aleatorizar estudiantes** (`POST /api/cursos/aleatorizar-estudiantes`, botón en ambas
+vistas) sortea, por grado, una matrícula total acotada entre el 50% y el 100% de la capacidad
+física del grado (secciones ya creadas × cupo máximo por sección), calcula cuántas secciones
+hacen falta para esa matrícula (sin superar las secciones creadas) y abre/cierra secciones en
+consecuencia: las que se cierran quedan en 0 estudiantes y sus bloques de horario se vacían.
+A continuación, **balancea automáticamente la nómina por área** (`balancearNomina` en
+`necesidadDocentesService.js`, dentro de la misma transacción): despide a los docentes que
+sobran en cada área (los de menos horas asignadas primero, ya que quedaron con menos carga) y
+recontrata a los que faltan (los dados de baja más recientemente primero), sin superar nunca
+los 30 docentes de `configuracion_colegio.capacidad_nomina`. Todo movimiento —manual o
+automático— queda registrado en la bitácora (`docentes_log`, expuesta en `GET /api/docentes/log`).
 
-**Despedir docentes** (`POST /api/docentes/despedir` con `{ "ids": ["MAT-FIS-01", "MAT-FIS-02"] }`)
-marca a esos docentes como inactivos y deja sus bloques de horario vacantes (`docente_id = NULL`),
-devolviendo el impacto: cuántos bloques y qué cursos quedaron afectados, con materia/día/hora de
-cada clase sin cubrir. **Reactivar** (`POST /api/docentes/:id/activar`) los vuelve a poner activos
-(por si después hacen falta de nuevo); sus clases anteriores quedaron vacantes y se cubren desde
-"Bloques vacantes", para no reasignarlas a ciegas y generar choques de horario.
+**Contratar** (`POST /api/docentes` con `{ "nombre", "areaId", "horasContratadas" }`) — desde
+la interfaz, las horas contratadas no se escriben a mano: `GET /api/areas/:id/horas-sugeridas`
+calcula cuántas horas semanales hacen falta en esa área ahora mismo (bloques de sus cursos
+activos, convertidos a horas, menos lo que ya cubren sus docentes activos) y las sugiere
+automáticamente, con tiempo completo (34.5 h) como sugerencia por defecto cuando no hace falta
+nada puntual. Si no se manda `id`, se genera uno correlativo dentro del área (ej. `MAT-FIS-07`).
 
-**Contratar** (`POST /api/docentes` con `{ "nombre", "areaId", "horasContratadas" }`) crea el
-docente (si no se manda `id`, se genera uno correlativo dentro de su área, ej. `MAT-FIS-07`). Para
-cargarle horario se usa `PUT /api/horarios/:id/asignar` con `{ "docenteId" }` sobre un bloque
-vacante (o el bulk `POST /api/docentes/:id/asignar-vacantes` con `{ "horarioIds": [...] }`), que
-valida que no choque con otra clase suya y que no supere sus horas contratadas.
+**Despedir** (`POST /api/docentes/despedir` con `{ "ids": ["MAT-FIS-01", "MAT-FIS-02"] }`)
+marca a esos docentes como inactivos y deja sus bloques de horario vacantes (`docente_id = NULL`).
+**Recontratar** (`POST /api/docentes/:id/activar`) los vuelve a poner activos; sus clases
+anteriores quedaron vacantes y no se reasignan solas, para no generar choques de horario.
 
 **Conflictos de horario** ("un docente o curso asignado simultáneamente") están impedidos por
 diseño con las llaves `UNIQUE (curso_id, dia, hora_inicio)` y `UNIQUE (docente_id, dia, hora_inicio)`
-de la tabla `horarios`; `GET /api/horarios/conflictos` los expone explícitamente para el dashboard.
+de la tabla `horarios`; `GET /api/horarios/conflictos` los expone explícitamente y el dashboard
+los cuenta.
 
 El número de estudiantes de un curso es una variable aleatoria acotada por su cupo máximo: se
 genera al azar (entre 75% y 100% del cupo) en el seed, se recalcula por grado con

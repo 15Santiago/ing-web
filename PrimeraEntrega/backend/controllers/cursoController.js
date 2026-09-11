@@ -7,7 +7,7 @@
 // hace falta nunca supere el límite de configuracion_colegio.
 // =========================================================
 const { pool } = require('../config/db');
-const { calcularNecesidadDocentes } = require('../services/necesidadDocentesService');
+const { calcularNecesidadDocentes, balancearNomina } = require('../services/necesidadDocentesService');
 
 function estudiantesAleatorios(cupoMaximo) {
   const minimo = Math.max(1, Math.round(cupoMaximo * 0.75));
@@ -148,6 +148,11 @@ async function eliminar(req, res) {
 // vacían (docente_id = NULL): así la nómina que hace falta nunca
 // supera el límite de docentes disponibles, y quien reabra una
 // sección después la cubre desde "Bloques vacantes".
+//
+// Después de recalcular los cursos, balancea la nómina de docentes
+// activos por área (ver balancearNomina en necesidadDocentesService):
+// desactiva a los que sobran y reactiva a los que faltan, todo
+// dentro de la misma transacción.
 // ---------------------------------------------------------
 const FRACCION_MINIMA_MATRICULA = 0.5;
 
@@ -207,6 +212,8 @@ async function aleatorizarEstudiantes(req, res) {
       });
     }
 
+    const balanceNomina = await balancearNomina(conexion);
+
     await conexion.commit();
 
     const [cursosActualizados] = await pool.query('SELECT * FROM cursos ORDER BY grado, seccion');
@@ -216,6 +223,8 @@ async function aleatorizarEstudiantes(req, res) {
       cursos: cursosActualizados,
       porGrado: resumenPorGrado,
       necesidadDocentes: necesidad,
+      docentesDesactivados: balanceNomina.desactivados,
+      docentesReactivados: balanceNomina.reactivados,
     });
   } catch (error) {
     await conexion.rollback();

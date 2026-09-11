@@ -1,7 +1,8 @@
 # PrimeraEntrega
 
-Proyecto integrador: gestión de notas académicas + programación académica del colegio
-(cursos, docentes, horarios). Separado en tres carpetas hermanas:
+Proyecto integrador: gestor académico del colegio — boletín de notas, gestión de docentes
+(nómina, horarios, bitácora) y gestión por curso (matrícula, horarios). Separado en tres
+carpetas hermanas:
 
 ```
 PrimeraEntrega/
@@ -10,9 +11,12 @@ PrimeraEntrega/
 └── DB/         → schema.sql y el seed que carga los datos en MySQL
 ```
 
-- **`frontend/`** — sin build ni dependencias: `index.html` (boletín de notas),
-  `personal.html` (gestión real de docentes/cursos/horarios, conectada a MySQL) y
-  `organizacion.html` (simulador de planeación anual, no persiste en BD).
+- **`frontend/`** — sin build ni dependencias. Cuatro páginas, todas conectadas a MySQL:
+  `index.html` (panel principal / gestor académico, con enlaces a las otras tres),
+  `boletin.html` (formulario de notas), `docentes-horario.html` (gestión de docentes:
+  dashboard, CRUD, horario semanal, bitácora de movimientos) y `cursos-horario.html`
+  (gestión por curso: matrícula, necesidad de docentes, horario semanal). `personal.css` y
+  `malla-materias.js` son compartidos por las dos últimas.
 - **`backend/`** — servidor Express que expone la API en `/api/*` y sirve `../frontend`
   como archivos estáticos desde el mismo origen (por eso `frontend/` no necesita su propio
   servidor ni configurar CORS). Ver `backend/README.md` para la guía completa de instalación,

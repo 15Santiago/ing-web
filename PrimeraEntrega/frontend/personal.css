@@ -71,11 +71,10 @@ td input[type="number"] { width: 5.5rem; }
 .course-summary__facts dd { margin: .35rem 0 0; font-weight: 700; }
 .course-summary__facts input { width: 5.5rem; padding: .45rem .55rem; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font: inherit; }
 .course-summary .btn { margin-left: auto; white-space: nowrap; }
+.course-summary__actions { display: flex; gap: .5rem; margin-left: auto; }
 
 .badge { display: inline-block; padding: .2rem .55rem; border-radius: 999px; font-size: .72rem; font-weight: 700; }
-.badge--activo { background: var(--green-soft); color: var(--teal); }
 .badge--inactivo { background: var(--red-soft); color: var(--red); }
-.badge--vacante { background: #fbe7d2; color: var(--orange); }
 
 .hiring-form { display: grid; grid-template-columns: repeat(4, 1fr); gap: .9rem; align-items: end; }
 .hiring-form label { display: flex; flex-direction: column; gap: .35rem; color: var(--muted); font-size: .82rem; font-weight: 700; }
@@ -85,13 +84,8 @@ td input[type="number"] { width: 5.5rem; }
 .feedback--ok { color: var(--teal); }
 .feedback--error { color: var(--red); }
 
-.impact-list { display: grid; gap: 1rem; margin-top: 1rem; }
 .impact-card { border: 1px solid var(--line); background: #fffaf2; padding: 1rem 1.2rem; }
 .impact-card h3 { margin: 0 0 .5rem; font: 600 1.05rem var(--serif); }
-.impact-card ul { margin: 0; padding-left: 1.1rem; }
-.impact-card li { margin: .3rem 0; }
-
-.vacante-row select { min-width: 12rem; }
 
 .schedule-grid { width: 100%; border-collapse: collapse; font-size: .84rem; }
 .schedule-grid th, .schedule-grid td { border: 1px solid var(--line); padding: .5rem .55rem; vertical-align: top; }
@@ -115,10 +109,27 @@ td input[type="number"] { width: 5.5rem; }
 .course-schedule-grid { min-width: 760px; }
 .course-schedule-grid .schedule-cell { min-height: 3.8rem; }
 
-.checkbox-cell { width: 2rem; }
-
 .empty-note { color: var(--muted); font-style: italic; padding: 1rem 0; }
 
+/* Malla curricular: asignaturas e intensidad horaria por
+   componente (área) y grado, al estilo de una malla universitaria. */
+.malla-wrap { overflow-x: auto; }
+.malla-materias { width: 100%; min-width: 62rem; border-collapse: collapse; font-size: .78rem; }
+.malla-materias th, .malla-materias td { border: 1px solid var(--line); padding: .45rem .5rem; text-align: center; vertical-align: middle; }
+.malla-materias thead th { background: var(--ink); color: white; font-size: .68rem; text-transform: uppercase; letter-spacing: .04em; }
+.malla-componente { font-weight: 700; min-width: 9rem; white-space: normal; }
+.malla-asignatura { text-align: left; font-weight: 600; white-space: nowrap; background: #faf7f0; }
+.malla-celda { min-width: 5.5rem; }
+.malla-celda strong { display: block; font-size: .76rem; }
+.malla-celda small { color: var(--muted); }
+.malla-celda--vacia { background: #f4f0e8; }
+.malla-resumen { font-weight: 700; border-left: 2px solid var(--ink); }
+.malla-resumen small { display: block; font-weight: 400; color: var(--muted); }
+.malla-subtotal { background: #f0ece1; font-weight: 700; }
+.malla-subtotal td:first-child { text-align: left; }
+.malla-total-general th, .malla-total-general td { background: var(--ink); color: white; font-weight: 700; }
+.malla-total-general th { text-align: left; }
+
 @media (max-width: 1050px) { .summary-grid { grid-template-columns: repeat(3, 1fr); } .hiring-form { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 780px) { .course-browser { grid-template-columns: 1fr; } .course-summary { flex-wrap: wrap; } .course-summary .btn { margin-left: 0; } }
+@media (max-width: 780px) { .course-browser { grid-template-columns: 1fr; } .course-summary { flex-wrap: wrap; } .course-summary .btn { margin-left: 0; } .course-summary__actions { margin-left: 0; } }
 @media (max-width: 640px) { .planner-header { display: block; padding-top: 2.5rem; } .back-link { display: inline-block; margin-top: 1rem; } .summary-grid { grid-template-columns: repeat(2, 1fr); } .hiring-form { grid-template-columns: 1fr; } .schedule-filters select { width: 100%; } .dialog-heading, .schedule-filters { padding-left: 1rem; padding-right: 1rem; } .schedule-dialog > .section-note, .schedule-dialog > .table-wrap { margin-left: 1rem; margin-right: 1rem; } }

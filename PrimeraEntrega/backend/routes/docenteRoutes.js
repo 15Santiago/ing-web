@@ -3,6 +3,7 @@ const router = express.Router();
 const docenteController = require('../controllers/docenteController');
 
 router.get('/', docenteController.consultarTodos);
+router.get('/log', docenteController.consultarLogController);
 router.post('/despedir', docenteController.despedir);
 router.get('/:id', docenteController.consultarPorId);
 router.post('/', docenteController.crear);

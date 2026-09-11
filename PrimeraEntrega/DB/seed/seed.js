@@ -96,6 +96,7 @@ async function seed() {
   const conexion = await pool.getConnection();
   try {
     await conexion.query('SET FOREIGN_KEY_CHECKS = 0');
+    await conexion.query('TRUNCATE TABLE docentes_log');
     await conexion.query('TRUNCATE TABLE horarios');
     await conexion.query('TRUNCATE TABLE docentes');
     await conexion.query('TRUNCATE TABLE cursos');

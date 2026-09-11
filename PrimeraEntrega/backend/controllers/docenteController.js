@@ -11,6 +11,7 @@
 //     sobre bloques vacantes, validando choques y horas máximas.
 // =========================================================
 const { pool } = require('../config/db');
+const { registrarEvento, consultarLog } = require('../services/docenteLogService');
 
 const DIAS_ORDEN = "FIELD(h.dia, 'Lunes','Martes','Miercoles','Jueves','Viernes')";
 
@@ -118,6 +119,13 @@ async function crear(req, res) {
        FROM docentes d LEFT JOIN areas a ON a.id = d.area_id WHERE d.id = ?`,
       [idDocente]
     );
+    await registrarEvento(null, {
+      docenteId: idDocente,
+      docenteNombre: creado[0].nombre,
+      accion: 'contratado',
+      origen: 'manual',
+      detalle: creado[0].area_nombre ? `Área: ${creado[0].area_nombre} · ${creado[0].horas_contratadas} h/semana` : `${creado[0].horas_contratadas} h/semana`,
+    });
     return res.status(201).json({ ...creado[0], horasAsignadas: 0 });
   } catch (error) {
     if (error.code === 'ER_DUP_ENTRY') {
@@ -158,7 +166,18 @@ async function actualizar(req, res) {
     if (resultado.affectedRows === 0) {
       return res.status(404).json({ mensaje: 'Docente no encontrado.' });
     }
-    const [actualizado] = await pool.query('SELECT * FROM docentes WHERE id = ?', [id]);
+    const [actualizado] = await pool.query(
+      `SELECT d.*, a.codigo AS area_codigo, a.nombre AS area_nombre
+       FROM docentes d LEFT JOIN areas a ON a.id = d.area_id WHERE d.id = ?`,
+      [id]
+    );
+    await registrarEvento(null, {
+      docenteId: id,
+      docenteNombre: actualizado[0].nombre,
+      accion: 'actualizado',
+      origen: 'manual',
+      detalle: `Área: ${actualizado[0].area_nombre || 'sin área'} · ${actualizado[0].horas_contratadas} h/semana`,
+    });
     return res.status(200).json(actualizado[0]);
   } catch (error) {
     console.error('Error en actualizar() [docentes]:', error);
@@ -206,6 +225,17 @@ async function despedir(req, res) {
 
     await conexion.query('UPDATE docentes SET activo = FALSE, fecha_baja = NOW() WHERE id IN (?)', [idsValidos]);
     await conexion.query('UPDATE horarios SET docente_id = NULL WHERE docente_id IN (?)', [idsValidos]);
+
+    for (const docente of docentes) {
+      // eslint-disable-next-line no-await-in-loop
+      await registrarEvento(conexion, {
+        docenteId: docente.id,
+        docenteNombre: docente.nombre,
+        accion: 'despedido',
+        origen: 'manual',
+        detalle: 'Despido manual desde Gestión de docentes',
+      });
+    }
 
     await conexion.commit();
 
@@ -275,6 +305,13 @@ async function activar(req, res) {
        FROM docentes d LEFT JOIN areas a ON a.id = d.area_id WHERE d.id = ?`,
       [id]
     );
+    await registrarEvento(null, {
+      docenteId: id,
+      docenteNombre: actualizado[0].nombre,
+      accion: 'reactivado',
+      origen: 'manual',
+      detalle: 'Reactivación manual desde Gestión de docentes',
+    });
     return res.status(200).json(actualizado[0]);
   } catch (error) {
     console.error('Error en activar() [docentes]:', error);
@@ -346,6 +383,22 @@ async function asignarVacantes(req, res) {
   }
 }
 
+// ---------------------------------------------------------
+// GET /api/docentes/log?docenteId=&limite=
+// Bitácora de contrataciones, despidos, reactivaciones y
+// actualizaciones (manuales y automáticas por aleatorizar).
+// ---------------------------------------------------------
+async function consultarLogController(req, res) {
+  try {
+    const { docenteId, limite } = req.query;
+    const eventos = await consultarLog({ docenteId, limite });
+    return res.status(200).json(eventos);
+  } catch (error) {
+    console.error('Error en consultarLogController() [docentes]:', error);
+    return res.status(500).json({ mensaje: 'Error interno al consultar la bitácora de docentes.' });
+  }
+}
+
 module.exports = {
   consultarTodos,
   consultarPorId,
@@ -355,4 +408,5 @@ module.exports = {
   eliminar,
   activar,
   asignarVacantes,
+  consultarLogController,
 };

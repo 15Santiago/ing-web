@@ -17,7 +17,6 @@ require('dotenv').config();
 
 const { verificarConexion } = require('./config/db');
 const estudianteRoutes = require('./routes/estudianteRoutes');
-const organizacionRoutes = require('./routes/organizacionRoutes');
 const areaRoutes = require('./routes/areaRoutes');
 const materiaRoutes = require('./routes/materiaRoutes');
 const cursoRoutes = require('./routes/cursoRoutes');
@@ -33,13 +32,13 @@ app.use(cors()); // por si en algún momento se sirve el front desde otro origen
 app.use(express.json());
 
 // ---------- Front end estático ----------
-// index.html, styles.css, script.js, personal.html, etc. viven en
-// la carpeta hermana ../frontend (ver PrimeraEntrega/frontend/).
+// index.html (panel principal), boletin.html, docentes-horario.html,
+// cursos-horario.html y sus CSS/JS viven en la carpeta hermana
+// ../frontend (ver PrimeraEntrega/frontend/).
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
 // ---------- API ----------
 app.use('/api/estudiantes', estudianteRoutes);
-app.use('/api/organizacion', organizacionRoutes);
 app.use('/api/areas', areaRoutes);
 app.use('/api/materias', materiaRoutes);
 app.use('/api/cursos', cursoRoutes);

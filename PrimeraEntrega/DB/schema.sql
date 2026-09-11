@@ -150,3 +150,25 @@ CREATE INDEX idx_horarios_dia ON horarios (dia);
 CREATE INDEX idx_cursos_jornada ON cursos (jornada);
 CREATE INDEX idx_cursos_activo ON cursos (activo);
 CREATE INDEX idx_docentes_area ON docentes (area_id);
+
+/* Trazabilidad de la nómina: cada contratación, despido,
+   reactivación o actualización de un docente queda registrada
+   aquí, sea que la haya hecho una persona desde "Gestión de
+   docentes" (origen = 'manual') o el balanceo automático que
+   corre dentro de POST /api/cursos/aleatorizar-estudiantes
+   (origen = 'automatico'). Se guarda el nombre del docente además
+   del id porque el id es estable pero el nombre puede ayudar a
+   leer la bitácora sin tener que cruzar tablas. */
+CREATE TABLE docentes_log (
+	id INT AUTO_INCREMENT PRIMARY KEY,
+	docente_id VARCHAR(20) NOT NULL,
+	docente_nombre VARCHAR(150) NOT NULL,
+	accion ENUM('contratado', 'despedido', 'reactivado', 'actualizado') NOT NULL,
+	origen ENUM('manual', 'automatico') NOT NULL DEFAULT 'manual',
+	detalle VARCHAR(255) NULL,
+	creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY (docente_id) REFERENCES docentes(id)
+);
+
+CREATE INDEX idx_docentes_log_docente ON docentes_log (docente_id);
+CREATE INDEX idx_docentes_log_creado ON docentes_log (creado_en);

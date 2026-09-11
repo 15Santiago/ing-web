@@ -3,26 +3,64 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Horarios de docentes</title>
+  <title>Gestión de docentes</title>
   <link rel="stylesheet" href="personal.css">
 </head>
 <body>
   <header class="planner-header">
     <div>
       <p class="eyebrow">Programación académica · Datos reales del colegio</p>
-      <h1>Horarios de docentes</h1>
-      <p>Consulta la carga académica y el horario semanal de cada profesor.</p>
+      <h1>Gestión de docentes</h1>
+      <p>Dashboard general, alta y baja de docentes, búsqueda, edición de datos, horario semanal y bitácora de movimientos.</p>
     </div>
     <a href="/" class="back-link">← Volver al inicio</a>
   </header>
 
   <main>
+    <section class="panel" aria-labelledby="titulo-dashboard">
+      <div class="section-heading">
+        <div><span class="section-number">01</span><h2 id="titulo-dashboard">Dashboard general</h2></div>
+        <button class="btn btn--small" id="btn-refrescar" type="button">Refrescar ↻</button>
+      </div>
+      <div id="tarjetas-dashboard" class="summary-grid"></div>
+    </section>
+
     <section class="panel" aria-labelledby="titulo-docentes">
       <div class="section-heading">
-        <div><span class="section-number">01</span><h2 id="titulo-docentes">Docentes</h2></div>
+        <div><span class="section-number">02</span><h2 id="titulo-docentes">Contratar nuevo docente</h2></div>
         <div class="toolbar">
-          <select id="filtro-estado"><option value="">Activos e inactivos</option><option value="true">Solo activos</option><option value="false">Solo inactivos</option></select>
+          <input type="search" id="buscar-docente" placeholder="Buscar por nombre o id...">
+          <select id="filtro-estado"><option value="">Activos y despedidos</option><option value="true">Solo activos</option><option value="false">Solo despedidos</option></select>
+          <button class="btn" id="btn-aleatorizar" type="button">Aleatorizar estudiantes</button>
         </div>
+      </div>
+      <p class="section-note">Contrata, busca, actualiza, despide o recontrata docentes. "Aleatorizar estudiantes" sortea la matrícula de los cursos y activa o desactiva automáticamente a los docentes que sobren o falten por área (máximo 30 en nómina); los que sobran quedan aquí como despedidos.</p>
+      <p class="feedback" id="mensaje-aleatorizar" role="status"></p>
+
+      <div class="course-browser" aria-label="Docentes registrados">
+        <label class="course-browser__selector" for="selector-docente-crud">Docente
+          <select id="selector-docente-crud"></select>
+        </label>
+        <div id="resumen-docente-crud" class="course-summary"></div>
+      </div>
+
+      <div class="section-heading" style="margin-top:2rem; border-bottom-style:dashed;">
+        <div><h2 id="titulo-formulario-docente" style="font-size:1.1rem;">Contratar nuevo docente</h2></div>
+      </div>
+      <form class="hiring-form" id="form-docente">
+        <label>Nombre completo<input id="nombre-docente" type="text" placeholder="Nombre y apellido" required></label>
+        <label>Área / especialidad<select id="area-docente"></select></label>
+        <label>Horas contratadas / semana<input id="horas-docente" type="number" min="1" max="34.5" step="0.25" readonly required></label>
+        <button class="btn btn--primary" type="submit" id="btn-guardar-docente">Contratar</button>
+      </form>
+      <p class="section-note" id="ayuda-horas-docente">Las horas contratadas las calcula el programa según lo que haga falta en el área elegida.</p>
+      <p><button class="btn btn--small" id="btn-cancelar-edicion" type="button" hidden>Cancelar edición</button></p>
+      <p class="feedback" id="feedback-docente" role="status"></p>
+    </section>
+
+    <section class="panel" aria-labelledby="titulo-horario-docente">
+      <div class="section-heading">
+        <div><span class="section-number">03</span><h2 id="titulo-horario-docente">Horario semanal por docente</h2></div>
       </div>
       <p class="section-note">Selecciona un docente para ver su carga académica y su horario semanal de clases.</p>
       <div class="course-browser" aria-label="Resumen de docentes">
@@ -30,6 +68,28 @@
           <select id="selector-docente-resumen"></select>
         </label>
         <div id="resumen-docente-seleccionado" class="course-summary"></div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="titulo-malla-materias">
+      <div class="section-heading">
+        <div><span class="section-number">04</span><h2 id="titulo-malla-materias">Asignaturas e intensidad horaria</h2></div>
+      </div>
+      <p class="section-note">Malla de asignaturas por componente (área) y grado: bloques y horas semanales de cada una, más cuántos cursos activos la reciben y cuántos docentes hacen falta solo para esa materia, con subtotales por componente y el total general.</p>
+      <div class="malla-wrap" id="malla-materias-docentes"></div>
+    </section>
+
+    <section class="panel" aria-labelledby="titulo-bitacora">
+      <div class="section-heading">
+        <div><span class="section-number">05</span><h2 id="titulo-bitacora">Bitácora de docentes</h2></div>
+        <button class="btn btn--small" id="btn-refrescar-bitacora" type="button">Refrescar ↻</button>
+      </div>
+      <p class="section-note">Historial de contrataciones, despidos, recontrataciones y actualizaciones, manuales o generadas automáticamente al aleatorizar estudiantes.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Fecha</th><th>Docente</th><th>Acción</th><th>Origen</th><th>Detalle</th></tr></thead>
+          <tbody id="tabla-bitacora"></tbody>
+        </table>
       </div>
     </section>
 
@@ -51,6 +111,7 @@
     </dialog>
   </main>
 
+  <script src="malla-materias.js" defer></script>
   <script src="docentes-horario.js" defer></script>
 </body>
 </html>

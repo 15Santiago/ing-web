@@ -4,6 +4,7 @@
 // y docentes; se carga con el seed y no se edita desde el front.
 // =========================================================
 const { pool } = require('../config/db');
+const { calcularHorasSugeridasArea } = require('../services/necesidadDocentesService');
 
 async function consultarTodas(req, res) {
   try {
@@ -15,4 +16,20 @@ async function consultarTodas(req, res) {
   }
 }
 
-module.exports = { consultarTodas };
+// ---------------------------------------------------------
+// GET /api/areas/:id/horas-sugeridas
+// Cuántas horas semanales conviene contratarle a un docente
+// nuevo de esta área, según lo que haga falta ahí mismo hoy.
+// ---------------------------------------------------------
+async function consultarHorasSugeridas(req, res) {
+  try {
+    const { id } = req.params;
+    const sugerencia = await calcularHorasSugeridasArea(id);
+    return res.status(200).json(sugerencia);
+  } catch (error) {
+    console.error('Error en consultarHorasSugeridas() [areas]:', error);
+    return res.status(500).json({ mensaje: 'Error interno al calcular las horas sugeridas.' });
+  }
+}
+
+module.exports = { consultarTodas, consultarHorasSugeridas };

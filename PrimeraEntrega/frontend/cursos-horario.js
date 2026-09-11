@@ -1,7 +1,7 @@
 // =========================================================
-// Horarios de estudiantes por curso — front end (vanilla JS)
-// Extraído tal cual de personal.js: consume /api/cursos y
-// /api/dashboard (solo para el panel de necesidad de docentes).
+// Gestión por curso — front end (vanilla JS)
+// Consume /api/cursos y
+// /api/dashboard (dashboard general + panel de necesidad de docentes).
 // =========================================================
 const DIAS = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes'];
 const DIAS_ETIQUETA = { Lunes: 'Lunes', Martes: 'Martes', Miercoles: 'Miércoles', Jueves: 'Jueves', Viernes: 'Viernes' };
@@ -50,16 +50,31 @@ function renderNecesidad(n) {
   panel.hidden = false;
   const diferencia = n.docentesActivos - n.docentesNecesarios;
   let accion = 'La nómina activa coincide con lo que hace falta.';
-  if (diferencia > 0) accion = `Sobran ${diferencia} docente(s): revisa la nómina en "Personal docente y horarios".`;
-  else if (diferencia < 0) accion = `Faltan ${-diferencia} docente(s): revisa la nómina en "Personal docente y horarios".`;
+  if (diferencia > 0) accion = `Sobran ${diferencia} docente(s): revisa la nómina en "Gestión de docentes".`;
+  else if (diferencia < 0) accion = `Faltan ${-diferencia} docente(s): revisa la nómina en "Gestión de docentes".`;
   panel.innerHTML = `
     <h3>Docentes necesarios: ${n.docentesNecesarios} de ${n.docentesDisponibles} máximo</h3>
-    <p>Con ${n.cursosActivos} de ${n.cursosTotales} cursos activos (${n.estudiantesActivos} estudiantes matriculados) hacen falta <strong>${n.docentesNecesarios}</strong> docentes. Hoy hay <strong>${n.docentesActivos}</strong> activos. ${accion}</p>`;
+    <p>Hoy hay <strong>${n.docentesActivos}</strong> activos. ${accion}</p>`;
 }
 
-async function cargarNecesidad() {
+// ---------------------------------------------------------
+// Dashboard general
+// ---------------------------------------------------------
+async function cargarDashboard() {
   try {
     const d = await api('/api/dashboard');
+    const tarjetas = [
+      ['Cursos activos', `${d.cursosActivos} / ${d.totalCursos}`, `${d.totalEstudiantes} estudiantes`],
+      ['Docentes activos', d.docentesActivos, `faltan ${Math.max(0, d.necesidadDocentes.docentesDisponibles - d.docentesActivos)} para la nómina máxima (${d.necesidadDocentes.docentesDisponibles})`],
+      ['Horas semanales', Math.round(d.horasSemanalesTotales * 100) / 100, 'de clase dictadas'],
+      ['Bloques de horario', d.totalBloques, `${d.bloquesVacantes} vacantes`],
+      ['Conflictos', d.conflictos, d.conflictos ? 'requieren revisión' : 'sin choques de horario'],
+      ['Jornadas', d.porJornada.map((j) => `${j.jornada === 'Manana' ? 'Mañana' : 'Tarde'}: ${j.cursos}`).join(' · '), 'cursos activos por jornada'],
+    ];
+    document.getElementById('tarjetas-dashboard').innerHTML = tarjetas.map(([titulo, valor, detalle]) => `
+      <article class="summary-card ${titulo === 'Conflictos' && d.conflictos ? 'summary-card--alert' : ''}">
+        <span>${titulo}</span><strong>${valor}</strong><small>${detalle}</small>
+      </article>`).join('');
     renderNecesidad(d.necesidadDocentes);
   } catch (error) {
     console.error(error);
@@ -100,7 +115,7 @@ function renderResumenCurso(cursoId) {
   }
   resumen.innerHTML = `
     <div class="course-summary__identity"><span class="section-number">Curso seleccionado</span><strong>${curso.grado}°${curso.seccion}</strong><span>${curso.jornada === 'Manana' ? 'Mañana' : 'Tarde'}${curso.activo ? '' : ' · <span class="badge badge--inactivo">Cerrado</span>'}</span></div>
-    <dl class="course-summary__facts"><div><dt>Cupo máximo</dt><dd>${curso.cupo_maximo}</dd></div><div><dt>Estudiantes</dt><dd><input id="estudiantes-curso" type="number" min="0" max="${curso.cupo_maximo}" value="${curso.estudiantes}" ${curso.activo ? '' : 'disabled title="Reabre la sección desde \'Personal docente y horarios\'"'}></dd></div></dl>
+    <dl class="course-summary__facts"><div><dt>Cupo máximo</dt><dd>${curso.cupo_maximo}</dd></div><div><dt>Estudiantes</dt><dd><input id="estudiantes-curso" type="number" min="0" max="${curso.cupo_maximo}" value="${curso.estudiantes}" ${curso.activo ? '' : 'disabled title="Reabre la sección con \'Aleatorizar estudiantes\'"'}></dd></div></dl>
     <button class="btn btn--small" id="btn-ver-curso-resumen" type="button">Ver horario</button>`;
   document.getElementById('btn-ver-curso-resumen').addEventListener('click', () => mostrarHorarioCurso(curso.id));
   const inputEstudiantes = document.getElementById('estudiantes-curso');
@@ -117,7 +132,7 @@ async function actualizarEstudiantesCurso(curso) {
       body: JSON.stringify({ grado: curso.grado, seccion: curso.seccion, jornada: curso.jornada, cupoMaximo: curso.cupo_maximo, estudiantes: valor }),
     });
     curso.estudiantes = valor;
-    cargarNecesidad();
+    cargarDashboard();
   } catch (error) {
     alert(error.message);
     cargarCursos();
@@ -168,12 +183,29 @@ function llenarSelectorCursosHorario(cursos) {
   if (cursos.some((curso) => String(curso.id) === valorPrevio)) selector.value = valorPrevio;
 }
 
+function mostrarMensajeAleatorizar(resultado) {
+  const mensaje = document.getElementById('mensaje-aleatorizar');
+  if (!mensaje) return;
+  const partes = [];
+  if (resultado.docentesDesactivados?.length) {
+    partes.push(`se despidieron ${resultado.docentesDesactivados.length} docente(s) (${resultado.docentesDesactivados.map((d) => d.nombre).join(', ')})`);
+  }
+  if (resultado.docentesReactivados?.length) {
+    partes.push(`se recontrataron ${resultado.docentesReactivados.length} docente(s) (${resultado.docentesReactivados.map((d) => d.nombre).join(', ')})`);
+  }
+  mensaje.textContent = partes.length
+    ? `Nómina ajustada automáticamente: ${partes.join(' y ')}.`
+    : 'La nómina activa ya coincidía con lo que hacía falta: no fue necesario despedir ni recontratar docentes.';
+  mensaje.className = 'feedback feedback--ok';
+}
+
 async function aleatorizarEstudiantes() {
   const boton = document.getElementById('btn-aleatorizar');
   boton.disabled = true;
   try {
     const resultado = await api('/api/cursos/aleatorizar-estudiantes', { method: 'POST', body: JSON.stringify({}) });
-    renderNecesidad(resultado.necesidadDocentes);
+    mostrarMensajeAleatorizar(resultado);
+    await cargarDashboard();
     await cargarCursos();
   } catch (error) {
     alert(error.message);
@@ -186,6 +218,7 @@ async function aleatorizarEstudiantes() {
 // Arranque
 // ---------------------------------------------------------
 async function iniciar() {
+  document.getElementById('btn-refrescar').addEventListener('click', cargarDashboard);
   document.getElementById('filtro-jornada').addEventListener('change', cargarCursos);
   document.getElementById('selector-curso-resumen').addEventListener('change', (e) => renderResumenCurso(e.target.value));
   document.getElementById('btn-aleatorizar').addEventListener('click', aleatorizarEstudiantes);
@@ -196,8 +229,9 @@ async function iniciar() {
   });
   document.getElementById('cerrar-dialogo-horario').addEventListener('click', () => document.getElementById('dialogo-horario').close());
 
-  await cargarNecesidad();
+  await cargarDashboard();
   await cargarCursos();
+  await cargarMallaMaterias('malla-materias-cursos');
 }
 
 iniciar();

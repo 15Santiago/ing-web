@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Colegio — Panel principal</title>
-  <meta name="description" content="Panel principal del sistema de gestión académica del colegio: boletín de notas, horarios de docentes, horarios por curso, personal docente y planeación anual.">
+  <title>Gestor Académico</title>
+  <meta name="description" content="Gestor académico del colegio: boletín de notas, gestión de docentes y gestión por curso, todo en un solo lugar.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;1,500&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
@@ -15,64 +15,51 @@
 
   <a class="skip-link" href="#contenido-principal">Saltar al contenido principal</a>
 
-  <header class="site-header">
-    <div class="site-header__inner">
-      <p class="site-header__eyebrow">Colegio · Panel principal</p>
-      <h1 class="site-header__title">Gestión académica</h1>
-      <p class="site-header__subtitle">Elige una de las funcionalidades disponibles del sistema.</p>
+  <header class="hero">
+    <div class="hero__inner">
+      <p class="hero__badge">🎓 Gestor académico</p>
+      <h1 class="hero__title">Todo el colegio, en un solo lugar</h1>
+      <p class="hero__subtitle">Notas de estudiantes, nómina de docentes y horarios de cada curso — organizados, al día y a un clic de distancia.</p>
+      <div class="hero__stats" id="hero-stats" aria-live="polite"></div>
     </div>
   </header>
 
   <main id="contenido-principal">
-
-    <section class="card" aria-labelledby="titulo-menu">
-      <h2 id="titulo-menu" class="card__title">
-        <span class="card__index" aria-hidden="true">01</span>
-        Funcionalidades
-      </h2>
-      <p class="card__hint">Selecciona una opción para continuar.</p>
+    <section class="menu-section" aria-labelledby="titulo-menu">
+      <h2 id="titulo-menu" class="menu-section__title">¿Qué quieres hacer hoy?</h2>
+      <p class="menu-section__hint">Elige un módulo para continuar.</p>
 
       <nav class="menu-grid" aria-label="Funcionalidades del sistema">
 
-        <a class="menu-card" href="boletin.html">
-          <span class="menu-card__index" aria-hidden="true">01</span>
+        <a class="menu-card menu-card--boletin" href="boletin.html">
+          <span class="menu-card__icon" aria-hidden="true">📝</span>
           <h3>Formulario de registro</h3>
           <p>Registra las cuatro notas de un estudiante y obtén al instante el promedio y la valoración de rendimiento.</p>
-          <span class="menu-card__cta">Abrir →</span>
+          <span class="menu-card__cta">Abrir boletín →</span>
         </a>
 
-        <a class="menu-card" href="docentes-horario.html">
-          <span class="menu-card__index" aria-hidden="true">02</span>
-          <h3>Horarios de docentes</h3>
-          <p>Consulta la carga académica y el horario semanal de cada profesor.</p>
-          <span class="menu-card__cta">Abrir →</span>
+        <a class="menu-card menu-card--docentes" href="docentes-horario.html">
+          <span class="menu-card__icon" aria-hidden="true">🧑‍🏫</span>
+          <h3>Gestión de docentes</h3>
+          <p>Dashboard general, contrata, busca, edita, despide o recontrata docentes, revisa su horario y la bitácora de movimientos.</p>
+          <span class="menu-card__cta">Abrir gestión →</span>
         </a>
 
-        <a class="menu-card" href="cursos-horario.html">
-          <span class="menu-card__index" aria-hidden="true">03</span>
-          <h3>Horarios por curso</h3>
-          <p>Consulta el horario semanal de clases de cada curso.</p>
-          <span class="menu-card__cta">Abrir →</span>
-        </a>
-
-        <a class="menu-card" href="personal.html">
-          <span class="menu-card__index" aria-hidden="true">04</span>
-          <h3>Personal docente y horarios</h3>
-          <p>Aleatoriza la matrícula, contrata o despide docentes, cubre vacantes y revisa la carga académica completa.</p>
-          <span class="menu-card__cta">Abrir →</span>
-        </a>
-
-        <a class="menu-card" href="organizacion.html">
-          <span class="menu-card__index" aria-hidden="true">05</span>
-          <h3>Simulador de planeación anual</h3>
-          <p>Distribuye materias por grado y jornada, calcula la carga semanal y detecta si la nómina disponible alcanza.</p>
-          <span class="menu-card__cta">Abrir →</span>
+        <a class="menu-card menu-card--cursos" href="cursos-horario.html">
+          <span class="menu-card__icon" aria-hidden="true">🏫</span>
+          <h3>Gestión por curso</h3>
+          <p>Matrícula, necesidad de docentes y el horario semanal de clases de cada curso.</p>
+          <span class="menu-card__cta">Abrir gestión →</span>
         </a>
 
       </nav>
     </section>
-
   </main>
 
+  <footer class="home-footer">
+    <p>Gestor académico · hecho para simplificar la administración escolar.</p>
+  </footer>
+
+  <script src="home.js" defer></script>
 </body>
 </html>
