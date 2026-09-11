@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Boletín — Gestión de notas académicas</title>
+  <meta name="description" content="Aplicación web para registrar las cuatro notas de un estudiante, calcular el promedio y obtener la valoración cualitativa.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;1,500&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <a class="skip-link" href="#contenido-principal">Saltar al contenido principal</a>
+
+  <header class="site-header">
+    <div class="site-header__inner">
+      <p class="site-header__eyebrow">Colegio · Boletín digital</p>
+      <h1 class="site-header__title">Gestión de notas académicas</h1>
+      <p class="site-header__subtitle">Registra las cuatro notas de un estudiante y obtén al instante el promedio y la valoración de rendimiento.</p>
+      <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+        <a class="site-header__planner-link" href="/">← Volver al inicio</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="contenido-principal">
+
+
+    <section class="card" aria-labelledby="titulo-formulario">
+      <h2 id="titulo-formulario" class="card__title">
+        <span class="card__index" aria-hidden="true">01</span>
+        Formulario de registro
+      </h2>
+      <p class="card__hint">Todos los campos son obligatorios. Las notas se califican en una escala de 0.0 a 5.0.</p>
+
+      <form id="form-notas" novalidate>
+
+        <div class="field">
+          <label for="nombre-estudiante">Nombre completo del estudiante</label>
+          <input
+            type="text"
+            id="nombre-estudiante"
+            name="nombre-estudiante"
+            placeholder="Ej: María Fernanda Gómez Rueda"
+            autocomplete="name"
+            required
+            aria-describedby="ayuda-nombre error-nombre"
+          >
+          <p id="ayuda-nombre" class="field__help">Escribe el nombre y los dos apellidos, tal como aparecen en la matrícula.</p>
+          <p id="error-nombre" class="field__error" role="alert" hidden>Ingresa el nombre del estudiante para continuar.</p>
+        </div>
+
+        <fieldset class="field-group">
+          <legend>Notas del periodo (escala 0.0 — 5.0)</legend>
+
+          <div class="grades-grid">
+
+            <div class="field">
+              <label for="nota-1">Taller 1</label>
+              <input
+                type="number"
+                id="nota-1"
+                name="nota-1"
+                inputmode="decimal"
+                min="0" max="5" step="0.1"
+                placeholder="Ej: 4.2"
+                required
+                aria-describedby="ayuda-nota-1 error-nota-1"
+              >
+              <p id="ayuda-nota-1" class="field__help">Valor entre 0.0 y 5.0.</p>
+              <p id="error-nota-1" class="field__error" role="alert" hidden>El tipo de dato no es válido. Solo se permiten valores entre 0.0 y 5.0.</p>
+            </div>
+
+            <div class="field">
+              <label for="nota-2">Quiz</label>
+              <input
+                type="number"
+                id="nota-2"
+                name="nota-2"
+                inputmode="decimal"
+                min="0" max="5" step="0.1"
+                placeholder="Ej: 3.8"
+                required
+                aria-describedby="ayuda-nota-2 error-nota-2"
+              >
+              <p id="ayuda-nota-2" class="field__help">Valor entre 0.0 y 5.0.</p>
+              <p id="error-nota-2" class="field__error" role="alert" hidden>El tipo de dato no es válido. Solo se permiten valores entre 0.0 y 5.0.</p>
+            </div>
+
+            <div class="field">
+              <label for="nota-3">Taller 2</label>
+              <input
+                type="number"
+                id="nota-3"
+                name="nota-3"
+                inputmode="decimal"
+                min="0" max="5" step="0.1"
+                placeholder="Ej: 4.5"
+                required
+                aria-describedby="ayuda-nota-3 error-nota-3"
+              >
+              <p id="ayuda-nota-3" class="field__help">Valor entre 0.0 y 5.0.</p>
+              <p id="error-nota-3" class="field__error" role="alert" hidden>El tipo de dato no es válido. Solo se permiten valores entre 0.0 y 5.0.</p>
+            </div>
+
+            <div class="field">
+              <label for="nota-4">Parcial</label>
+              <input
+                type="number"
+                id="nota-4"
+                name="nota-4"
+                inputmode="decimal"
+                min="0" max="5" step="0.1"
+                placeholder="Ej: 4.6"
+                required
+                aria-describedby="ayuda-nota-4 error-nota-4"
+              >
+              <p id="ayuda-nota-4" class="field__help">Valor entre 0.0 y 5.0.</p>
+              <p id="error-nota-4" class="field__error" role="alert" hidden>El tipo de dato no es válido. Solo se permiten valores entre 0.0 y 5.0.</p>
+            </div>
+
+          </div>
+        </fieldset>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn--primary" id="btn-calcular" disabled>
+            Calcular promedio
+          </button>
+          <button type="button" class="btn btn--secondary" id="btn-guardar" disabled>
+            Guardar registro
+          </button>
+        </div>
+      </form>
+    </section>
+
+
+    <section class="card card--result" aria-labelledby="titulo-resultado" hidden>
+      <h2 id="titulo-resultado" class="card__title">
+        <span class="card__index" aria-hidden="true">02</span>
+        Resultado del boletín
+      </h2>
+
+      <div id="area-resultados" class="result-slip" aria-live="polite">
+        <p class="result-slip__empty">
+          Aún no hay un promedio calculado. Completa el formulario y presiona
+          <strong>«Calcular promedio»</strong> para ver aquí el resultado cuantitativo y cualitativo.
+        </p>
+
+        <dl class="result-slip__data" hidden>
+          <div class="result-slip__row">
+            <dt>Estudiante</dt>
+            <dd id="resultado-nombre">Nombre del estudiante</dd>
+          </div>
+          <div class="result-slip__row">
+            <dt>Promedio</dt>
+            <dd id="resultado-promedio" class="result-slip__value">0.0</dd>
+          </div>
+          <div class="result-slip__row">
+            <dt>Estado</dt>
+            <dd id="resultado-estado"><span class="badge">Aprobado</span></dd>
+          </div>
+          <div class="result-slip__row">
+            <dt>Rendimiento</dt>
+            <dd id="resultado-rendimiento">Rendimiento insuficiente</dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+
+
+    <section class="card" aria-labelledby="titulo-consulta">
+      <h2 id="titulo-consulta" class="card__title">
+        <span class="card__index" aria-hidden="true">03</span>
+        Consultar registros almacenados
+      </h2>
+      <p class="card__hint">Aquí aparecerán los estudiantes guardados, con la opción de actualizar o eliminar cada registro.</p>
+
+      <div class="table-scroll">
+        <table class="records-table">
+          <caption class="sr-only">Listado de estudiantes registrados con sus notas y resultado</caption>
+          <thead>
+            <tr>
+              <th scope="col">Estudiante</th>
+              <th scope="col">N1</th>
+              <th scope="col">N2</th>
+              <th scope="col">N3</th>
+              <th scope="col">N4</th>
+              <th scope="col">Promedio</th>
+              <th scope="col">Rendimiento</th>
+              <th scope="col"><span class="sr-only">Acciones</span></th>
+            </tr>
+          </thead>
+          <tbody id="cuerpo-tabla-registros">
+            <tr class="records-table__empty-row">
+              <td colspan="8">
+                Todavía no hay estudiantes registrados. Los registros guardados se listarán en esta tabla.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="script.js" defer></script>
+</body>
+</html>

@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Boletín — Gestión de notas académicas</title>
-  <meta name="description" content="Aplicación web para registrar las cuatro notas de un estudiante, calcular el promedio y obtener la valoración cualitativa.">
+  <title>Colegio — Panel principal</title>
+  <meta name="description" content="Panel principal del sistema de gestión académica del colegio: boletín de notas, horarios de docentes, horarios por curso, personal docente y planeación anual.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;1,500&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="home.css">
 </head>
 <body>
 
@@ -16,196 +17,62 @@
 
   <header class="site-header">
     <div class="site-header__inner">
-      <p class="site-header__eyebrow">Colegio · Boletín digital</p>
-      <h1 class="site-header__title">Gestión de notas académicas</h1>
-      <p class="site-header__subtitle">Registra las cuatro notas de un estudiante y obtén al instante el promedio y la valoración de rendimiento.</p>
-      <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
-        <a class="site-header__planner-link" href="/personal.html">Personal docente y horarios <span aria-hidden="true">+</span></a>
-        <a class="site-header__planner-link" href="/organizacion.html">Simulador de planeación anual <span aria-hidden="true">+</span></a>
-      </div>
+      <p class="site-header__eyebrow">Colegio · Panel principal</p>
+      <h1 class="site-header__title">Gestión académica</h1>
+      <p class="site-header__subtitle">Elige una de las funcionalidades disponibles del sistema.</p>
     </div>
   </header>
 
   <main id="contenido-principal">
 
-
-    <section class="card" aria-labelledby="titulo-formulario">
-      <h2 id="titulo-formulario" class="card__title">
+    <section class="card" aria-labelledby="titulo-menu">
+      <h2 id="titulo-menu" class="card__title">
         <span class="card__index" aria-hidden="true">01</span>
-        Formulario de registro
+        Funcionalidades
       </h2>
-      <p class="card__hint">Todos los campos son obligatorios. Las notas se califican en una escala de 0.0 a 5.0.</p>
+      <p class="card__hint">Selecciona una opción para continuar.</p>
 
-      <form id="form-notas" novalidate>
+      <nav class="menu-grid" aria-label="Funcionalidades del sistema">
 
-        <div class="field">
-          <label for="nombre-estudiante">Nombre completo del estudiante</label>
-          <input
-            type="text"
-            id="nombre-estudiante"
-            name="nombre-estudiante"
-            placeholder="Ej: María Fernanda Gómez Rueda"
-            autocomplete="name"
-            required
-            aria-describedby="ayuda-nombre error-nombre"
-          >
-          <p id="ayuda-nombre" class="field__help">Escribe el nombre y los dos apellidos, tal como aparecen en la matrícula.</p>
-          <p id="error-nombre" class="field__error" role="alert" hidden>Ingresa el nombre del estudiante para continuar.</p>
-        </div>
+        <a class="menu-card" href="boletin.html">
+          <span class="menu-card__index" aria-hidden="true">01</span>
+          <h3>Formulario de registro</h3>
+          <p>Registra las cuatro notas de un estudiante y obtén al instante el promedio y la valoración de rendimiento.</p>
+          <span class="menu-card__cta">Abrir →</span>
+        </a>
 
-        <fieldset class="field-group">
-          <legend>Notas del periodo (escala 0.0 — 5.0)</legend>
+        <a class="menu-card" href="docentes-horario.html">
+          <span class="menu-card__index" aria-hidden="true">02</span>
+          <h3>Horarios de docentes</h3>
+          <p>Consulta la carga académica y el horario semanal de cada profesor.</p>
+          <span class="menu-card__cta">Abrir →</span>
+        </a>
 
-          <div class="grades-grid">
+        <a class="menu-card" href="cursos-horario.html">
+          <span class="menu-card__index" aria-hidden="true">03</span>
+          <h3>Horarios por curso</h3>
+          <p>Consulta el horario semanal de clases de cada curso.</p>
+          <span class="menu-card__cta">Abrir →</span>
+        </a>
 
-            <div class="field">
-              <label for="nota-1">Taller 1</label>
-              <input
-                type="number"
-                id="nota-1"
-                name="nota-1"
-                inputmode="decimal"
-                min="0" max="5" step="0.1"
-                placeholder="Ej: 4.2"
-                required
-                aria-describedby="ayuda-nota-1 error-nota-1"
-              >
-              <p id="ayuda-nota-1" class="field__help">Valor entre 0.0 y 5.0.</p>
-              <p id="error-nota-1" class="field__error" role="alert" hidden>El tipo de dato no es válido. Solo se permiten valores entre 0.0 y 5.0.</p>
-            </div>
+        <a class="menu-card" href="personal.html">
+          <span class="menu-card__index" aria-hidden="true">04</span>
+          <h3>Personal docente y horarios</h3>
+          <p>Aleatoriza la matrícula, contrata o despide docentes, cubre vacantes y revisa la carga académica completa.</p>
+          <span class="menu-card__cta">Abrir →</span>
+        </a>
 
-            <div class="field">
-              <label for="nota-2">Quiz</label>
-              <input
-                type="number"
-                id="nota-2"
-                name="nota-2"
-                inputmode="decimal"
-                min="0" max="5" step="0.1"
-                placeholder="Ej: 3.8"
-                required
-                aria-describedby="ayuda-nota-2 error-nota-2"
-              >
-              <p id="ayuda-nota-2" class="field__help">Valor entre 0.0 y 5.0.</p>
-              <p id="error-nota-2" class="field__error" role="alert" hidden>El tipo de dato no es válido. Solo se permiten valores entre 0.0 y 5.0.</p>
-            </div>
+        <a class="menu-card" href="organizacion.html">
+          <span class="menu-card__index" aria-hidden="true">05</span>
+          <h3>Simulador de planeación anual</h3>
+          <p>Distribuye materias por grado y jornada, calcula la carga semanal y detecta si la nómina disponible alcanza.</p>
+          <span class="menu-card__cta">Abrir →</span>
+        </a>
 
-            <div class="field">
-              <label for="nota-3">Taller 2</label>
-              <input
-                type="number"
-                id="nota-3"
-                name="nota-3"
-                inputmode="decimal"
-                min="0" max="5" step="0.1"
-                placeholder="Ej: 4.5"
-                required
-                aria-describedby="ayuda-nota-3 error-nota-3"
-              >
-              <p id="ayuda-nota-3" class="field__help">Valor entre 0.0 y 5.0.</p>
-              <p id="error-nota-3" class="field__error" role="alert" hidden>El tipo de dato no es válido. Solo se permiten valores entre 0.0 y 5.0.</p>
-            </div>
-
-            <div class="field">
-              <label for="nota-4">Parcial</label>
-              <input
-                type="number"
-                id="nota-4"
-                name="nota-4"
-                inputmode="decimal"
-                min="0" max="5" step="0.1"
-                placeholder="Ej: 4.6"
-                required
-                aria-describedby="ayuda-nota-4 error-nota-4"
-              >
-              <p id="ayuda-nota-4" class="field__help">Valor entre 0.0 y 5.0.</p>
-              <p id="error-nota-4" class="field__error" role="alert" hidden>El tipo de dato no es válido. Solo se permiten valores entre 0.0 y 5.0.</p>
-            </div>
-
-          </div>
-        </fieldset>
-
-        <div class="form-actions">
-          <button type="submit" class="btn btn--primary" id="btn-calcular" disabled>
-            Calcular promedio
-          </button>
-          <button type="button" class="btn btn--secondary" id="btn-guardar" disabled>
-            Guardar registro
-          </button>
-        </div>
-      </form>
-    </section>
-
-
-    <section class="card card--result" aria-labelledby="titulo-resultado" hidden>
-      <h2 id="titulo-resultado" class="card__title">
-        <span class="card__index" aria-hidden="true">02</span>
-        Resultado del boletín
-      </h2>
-
-      <div id="area-resultados" class="result-slip" aria-live="polite">
-        <p class="result-slip__empty">
-          Aún no hay un promedio calculado. Completa el formulario y presiona
-          <strong>«Calcular promedio»</strong> para ver aquí el resultado cuantitativo y cualitativo.
-        </p>
-
-        <dl class="result-slip__data" hidden>
-          <div class="result-slip__row">
-            <dt>Estudiante</dt>
-            <dd id="resultado-nombre">Nombre del estudiante</dd>
-          </div>
-          <div class="result-slip__row">
-            <dt>Promedio</dt>
-            <dd id="resultado-promedio" class="result-slip__value">0.0</dd>
-          </div>
-          <div class="result-slip__row">
-            <dt>Estado</dt>
-            <dd id="resultado-estado"><span class="badge">Aprobado</span></dd>
-          </div>
-          <div class="result-slip__row">
-            <dt>Rendimiento</dt>
-            <dd id="resultado-rendimiento">Rendimiento insuficiente</dd>
-          </div>
-        </dl>
-      </div>
-    </section>
-
-
-    <section class="card" aria-labelledby="titulo-consulta">
-      <h2 id="titulo-consulta" class="card__title">
-        <span class="card__index" aria-hidden="true">03</span>
-        Consultar registros almacenados
-      </h2>
-      <p class="card__hint">Aquí aparecerán los estudiantes guardados, con la opción de actualizar o eliminar cada registro.</p>
-
-      <div class="table-scroll">
-        <table class="records-table">
-          <caption class="sr-only">Listado de estudiantes registrados con sus notas y resultado</caption>
-          <thead>
-            <tr>
-              <th scope="col">Estudiante</th>
-              <th scope="col">N1</th>
-              <th scope="col">N2</th>
-              <th scope="col">N3</th>
-              <th scope="col">N4</th>
-              <th scope="col">Promedio</th>
-              <th scope="col">Rendimiento</th>
-              <th scope="col"><span class="sr-only">Acciones</span></th>
-            </tr>
-          </thead>
-          <tbody id="cuerpo-tabla-registros">
-            <tr class="records-table__empty-row">
-              <td colspan="8">
-                Todavía no hay estudiantes registrados. Los registros guardados se listarán en esta tabla.
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      </nav>
     </section>
 
   </main>
 
-  <script src="script.js" defer></script>
 </body>
 </html>

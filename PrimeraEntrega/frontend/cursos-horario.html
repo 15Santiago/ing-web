@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Horarios por curso</title>
+  <link rel="stylesheet" href="personal.css">
+</head>
+<body>
+  <header class="planner-header">
+    <div>
+      <p class="eyebrow">Programación académica · Datos reales del colegio</p>
+      <h1>Horarios de estudiantes por curso</h1>
+      <p>Aleatoriza la matrícula de estudiantes, mira cuántos docentes hacen falta (máximo 30) y consulta el horario semanal de cada curso.</p>
+    </div>
+    <a href="/" class="back-link">← Volver al inicio</a>
+  </header>
+
+  <main>
+    <section class="panel" aria-labelledby="titulo-cursos">
+      <div class="section-heading">
+        <div><span class="section-number">01</span><h2 id="titulo-cursos">Cursos</h2></div>
+        <div class="toolbar">
+          <select id="filtro-jornada"><option value="">Todas las jornadas</option><option value="Manana">Mañana</option><option value="Tarde">Tarde</option></select>
+          <button class="btn" id="btn-aleatorizar" type="button">Aleatorizar estudiantes</button>
+        </div>
+      </div>
+      <p class="section-note">La matrícula de cada grado es una variable aleatoria acotada por la capacidad física de secciones ya creadas. "Aleatorizar estudiantes" sortea esa matrícula, abre o cierra secciones según haga falta y recalcula cuántos docentes se necesitan (máximo 30).</p>
+      <div id="resumen-necesidad" class="impact-card" hidden></div>
+      <div class="course-browser" aria-label="Resumen de cursos">
+        <label class="course-browser__selector" for="selector-curso-resumen">Curso
+          <select id="selector-curso-resumen"></select>
+        </label>
+        <div id="resumen-curso-seleccionado" class="course-summary"></div>
+      </div>
+    </section>
+
+    <dialog class="schedule-dialog" id="dialogo-horario" aria-labelledby="titulo-dialogo-horario">
+      <div class="dialog-heading">
+        <div>
+          <span class="section-number">Horario semanal</span>
+          <h2 id="titulo-dialogo-horario">Horario semanal del curso</h2>
+        </div>
+        <button class="dialog-close" id="cerrar-dialogo-horario" type="button" aria-label="Cerrar horario">×</button>
+      </div>
+      <div class="schedule-filters">
+        <label>Curso<select id="selector-curso-horario"></select></label>
+      </div>
+      <p class="section-note" id="resumen-horario-curso"></p>
+      <div class="table-wrap">
+        <table class="schedule-grid course-schedule-grid" id="grid-horario-curso"></table>
+      </div>
+    </dialog>
+  </main>
+
+  <script src="cursos-horario.js" defer></script>
+</body>
+</html>

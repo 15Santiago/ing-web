@@ -1,0 +1,54 @@
+/* =========================================================
+   PÁGINA PRINCIPAL — menú de funcionalidades
+   Reutiliza los tokens y el encabezado definidos en styles.css.
+   ========================================================= */
+
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--gap-form);
+}
+
+.menu-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.4rem;
+  background: var(--paper);
+  border: 1.5px solid var(--paper-line);
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.menu-card:hover,
+.menu-card:focus-visible {
+  border-color: var(--ink);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.menu-card__index {
+  font-family: var(--font-mono);
+  font-size: var(--fs-index);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.menu-card h3 {
+  font-size: var(--fs-h2);
+  font-weight: 600;
+}
+
+.menu-card p {
+  color: var(--ink-soft);
+  font-size: var(--fs-small);
+  flex-grow: 1;
+}
+
+.menu-card__cta {
+  font-weight: 700;
+  font-size: var(--fs-small);
+  color: var(--ink);
+}

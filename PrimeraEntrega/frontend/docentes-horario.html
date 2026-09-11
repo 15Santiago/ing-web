@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Horarios de docentes</title>
+  <link rel="stylesheet" href="personal.css">
+</head>
+<body>
+  <header class="planner-header">
+    <div>
+      <p class="eyebrow">Programación académica · Datos reales del colegio</p>
+      <h1>Horarios de docentes</h1>
+      <p>Consulta la carga académica y el horario semanal de cada profesor.</p>
+    </div>
+    <a href="/" class="back-link">← Volver al inicio</a>
+  </header>
+
+  <main>
+    <section class="panel" aria-labelledby="titulo-docentes">
+      <div class="section-heading">
+        <div><span class="section-number">01</span><h2 id="titulo-docentes">Docentes</h2></div>
+        <div class="toolbar">
+          <select id="filtro-estado"><option value="">Activos e inactivos</option><option value="true">Solo activos</option><option value="false">Solo inactivos</option></select>
+        </div>
+      </div>
+      <p class="section-note">Selecciona un docente para ver su carga académica y su horario semanal de clases.</p>
+      <div class="course-browser" aria-label="Resumen de docentes">
+        <label class="course-browser__selector" for="selector-docente-resumen">Docente
+          <select id="selector-docente-resumen"></select>
+        </label>
+        <div id="resumen-docente-seleccionado" class="course-summary"></div>
+      </div>
+    </section>
+
+    <dialog class="schedule-dialog" id="dialogo-horario" aria-labelledby="titulo-dialogo-horario">
+      <div class="dialog-heading">
+        <div>
+          <span class="section-number">Horario semanal</span>
+          <h2 id="titulo-dialogo-horario">Horario semanal del docente</h2>
+        </div>
+        <button class="dialog-close" id="cerrar-dialogo-horario" type="button" aria-label="Cerrar horario">×</button>
+      </div>
+      <div class="schedule-filters">
+        <label>Docente<select id="selector-docente-horario"></select></label>
+      </div>
+      <p class="section-note" id="resumen-horario-docente"></p>
+      <div class="table-wrap">
+        <table class="schedule-grid course-schedule-grid" id="grid-horario-docente"></table>
+      </div>
+    </dialog>
+  </main>
+
+  <script src="docentes-horario.js" defer></script>
+</body>
+</html>
